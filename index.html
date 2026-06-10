@@ -308,6 +308,10 @@
     .btn-submit:disabled { background: #a0aec0; cursor: not-allowed; }
     .btn-pdf { background: #c0392b; color: white; }
     .btn-pdf:hover { background: #a93226; }
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: #1a4fa8; }
+    .btn-secondary { background: white; color: var(--blue); border: 2px solid var(--blue); }
+    .btn-secondary:hover { background: #f0f4ff; }
 
     .step-counter { font-size: 0.82rem; color: var(--text-muted); }
 
@@ -322,6 +326,93 @@
       vertical-align: middle; margin-right: 6px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MODALE CONFERMA */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 14px;
+      padding: 28px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal h3 {
+      color: var(--blue);
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-section {
+      background: #f4f6f9;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+    .modal-section h4 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .modal-row {
+      display: flex;
+      gap: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+    .modal-row span:first-child {
+      color: var(--text-muted);
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+    .modal-row span:last-child { color: var(--text); font-weight: 500; }
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+    .modal-warning {
+      background: #fef3cd;
+      border: 1px solid #f0ad4e;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.83rem;
+      color: #856404;
+      margin-bottom: 16px;
+    }
+
+    /* BLOCCO POST-INVIO */
+    .form-blocked {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .sent-banner {
+      display: none;
+      background: #1a7a3f;
+      color: white;
+      border-radius: 10px;
+      padding: 20px 24px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .sent-banner.show { display: block; }
 
     /* INFO BOX */
     .info-box {
@@ -1092,9 +1183,201 @@
     }
   }
 
-  // SUBMIT
+  // ─── FLAG: impedisce doppio invio ───────────────────────────────
+  let formSubmitted = false;
+  let pendingData   = null;   // dati pronti per l'invio reale
+
+  // ─── HELPER: valore leggibile per la modale ──────────────────────
+  function labelOf(fieldName, value) {
+    if (!value) return '—';
+    // select: mostra il testo dell'option selezionata
+    const sel = document.querySelector(`[name="${fieldName}"]`);
+    if (sel && sel.tagName === 'SELECT') {
+      const opt = sel.querySelector(`option[value="${CSS.escape(value)}"]`);
+      return opt ? opt.textContent : value;
+    }
+    return value;
+  }
+
+  // ─── MOSTRA MODALE RIEPILOGO ────────────────────────────────────
+  function mostraModaleConferma(data) {
+    const ov = document.getElementById('modalConferma');
+
+    function r(label, value) {
+      if (!value || value === '—') return '';
+      return `<div class="modal-row"><span>${label}</span><span>${value}</span></div>`;
+    }
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="modal-warning">⚠️ Controlla con attenzione i dati prima di confermare. Una volta inviati non potranno essere modificati.</div>
+
+      <div class="modal-section">
+        <h4>Dati Anagrafici</h4>
+        ${r('Nome e Cognome', `${data.nome||''} ${data.cognome||''}`)}
+        ${r('Data di nascita', data.data_nascita)}
+        ${r('Luogo di nascita', data.luogo_nascita)}
+        ${r('Nazionalità', data.nazionalita)}
+        ${r('Codice Fiscale', data.codice_fiscale)}
+        ${r('N° AVS', data.avs)}
+        ${r('Indirizzo', [data.indirizzo, data.cap, data.citta, data.paese].filter(Boolean).join(', '))}
+        ${r('Telefono', data.telefono)}
+        ${r('Email', data.email)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Contatto di Emergenza</h4>
+        ${r('Nome', data.emerg_nome)}
+        ${r('Telefono', data.emerg_telefono)}
+        ${r('Relazione', data.emerg_relazione)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Documenti e Permessi</h4>
+        ${r('Documento', `${data.doc_tipo||''} n° ${data.doc_numero||''}`)}
+        ${r('Scadenza documento', data.doc_scadenza)}
+        ${r('Tipo permesso', data.permesso_tipo)}
+        ${r('N° permesso', data.permesso_numero)}
+        ${r('Scad. permesso', data.permesso_scadenza)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Stato Civile e Banca</h4>
+        ${r('Stato civile', data.stato_civile)}
+        ${r('Figli a carico', data.figli)}
+        ${r('IBAN', data.iban)}
+        ${r('Banca', data.banca)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Informazioni Lavorative</h4>
+        ${r('Ruolo', data.ruolo)}
+        ${r('Reparto', data.reparto)}
+        ${r('Data inizio', data.data_inizio)}
+        ${r('Tipo contratto', data.tipo_contratto)}
+        ${r('Percentuale', data.percentuale ? data.percentuale + '%' : '')}
+        ${r('Titolo di studio', data.titolo_studio)}
+        ${r('Datore precedente', data.azienda_prec)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Allegati</h4>
+        ${data.allegati && data.allegati.length > 0
+          ? data.allegati.map(a => `<div class="modal-row"><span>📎</span><span>${a.nome}</span></div>`).join('')
+          : '<div class="modal-row"><span>Nessun file allegato</span><span></span></div>'}
+      </div>
+    `;
+
+    ov.classList.add('open');
+  }
+
+  // ─── INVIO REALE (chiamato dalla modale) ────────────────────────
+  async function eseguiInvio() {
+    if (formSubmitted) return;
+
+    document.getElementById('modalConferma').classList.remove('open');
+
+    const submitBtn  = document.getElementById('btnSubmit');
+    const successMsg = document.getElementById('successMsg');
+    const errorMsg   = document.getElementById('errorMsg');
+    successMsg.style.display = 'none';
+    errorMsg.style.display   = 'none';
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Invio in corso...';
+
+    const data = pendingData;
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error(res.status);
+
+      // ── RESET E RITORNO AL PASSO 1 ──────────────────────────────
+      formSubmitted = true;
+
+      // Salva dati per PDF prima di resettare
+      const dataPDF = JSON.parse(JSON.stringify(data));
+
+      // 1. Reset form HTML
+      document.getElementById('onboardingForm').reset();
+
+      // 2. Reset firma
+      initCanvas();
+      hasSigned = false;
+      sigPlaceholder.style.display = 'block';
+      sigStatus.textContent = '';
+      canvas.style.borderColor = '';
+
+      // 3. Reset allegati
+      selectedFiles = [];
+      renderFiles();
+
+      // 4. Torna al passo 0 (prima sezione)
+      const sections = document.querySelectorAll('.form-section');
+      const steps    = document.querySelectorAll('.step');
+      sections.forEach(s => s.classList.remove('active'));
+      steps.forEach(s => { s.classList.remove('active','done'); });
+      sections[0].classList.add('active');
+      steps[0].classList.add('active');
+      currentStep = 0;
+      updateNavButtons();
+
+      // 5. Nascondi messaggi precedenti e mostra il banner di successo in cima
+      successMsg.style.display = 'none';
+      errorMsg.style.display   = 'none';
+
+      // Mostra banner verde temporaneo in cima alla pagina
+      const banner = document.createElement('div');
+      banner.style.cssText = `
+        position:fixed; top:0; left:0; right:0; z-index:2000;
+        background:#1a7a3f; color:white; text-align:center;
+        padding:18px 24px; font-size:1rem; font-weight:600;
+        box-shadow:0 4px 20px rgba(0,0,0,0.25);
+      `;
+      banner.innerHTML = `
+        ✅ Registrazione di <strong>${dataPDF.nome} ${dataPDF.cognome}</strong> inviata con successo!
+        &nbsp;&nbsp;
+        <button onclick="generatePDF(${JSON.stringify(dataPDF).replace(/</g,'\\u003c')})"
+          style="background:white;color:#1a7a3f;border:none;border-radius:6px;padding:6px 14px;font-weight:700;cursor:pointer;margin-left:8px;">
+          📄 Scarica PDF
+        </button>
+        <button onclick="this.parentElement.remove()"
+          style="background:transparent;color:white;border:1px solid rgba(255,255,255,0.5);border-radius:6px;padding:6px 12px;cursor:pointer;margin-left:8px;font-size:0.85rem;">
+          ✕ Chiudi
+        </button>
+      `;
+      document.body.prepend(banner);
+      // Auto-rimuovi dopo 30 secondi
+      setTimeout(() => { if (banner.parentElement) banner.remove(); }, 30000);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Riabilita invio per un eventuale nuovo dipendente
+      formSubmitted = false;
+      pendingData   = null;
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '✅ Invia registrazione';
+
+    } catch(err) {
+      errorMsg.textContent = '❌ Errore durante l\'invio. Riprova o contatta l\'ufficio HR.';
+      errorMsg.className = 'message error';
+      errorMsg.style.display = 'block';
+      console.error(err);
+      // In caso di errore riabilita il pulsante per riprovare
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '✅ Invia registrazione';
+    }
+  }
+
+  // ─── SUBMIT: validazione + raccolta dati + modale ───────────────
   document.getElementById('onboardingForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+
+    if (formSubmitted) return; // già inviato, ignora
+
     if (!validateSection(6)) return;
     if (!document.getElementById('privacy_gdpr').checked) {
       document.getElementById('privacy_gdpr').style.outline = '2px solid #e53e3e';
@@ -1117,12 +1400,6 @@
       return;
     }
 
-    const submitBtn  = document.getElementById('btnSubmit');
-    const successMsg = document.getElementById('successMsg');
-    const errorMsg   = document.getElementById('errorMsg');
-    successMsg.style.display = 'none';
-    errorMsg.style.display   = 'none';
-
     // Raccolta dati
     const form = e.target;
     const data = {};
@@ -1135,50 +1412,42 @@
 
     // Formato data con trattini — le slash "/" creano sottocartelle in SharePoint!
     const oggi = new Date();
-    const gg = String(oggi.getDate()).padStart(2,'0');
-    const mm = String(oggi.getMonth()+1).padStart(2,'0');
+    const gg   = String(oggi.getDate()).padStart(2,'0');
+    const mm   = String(oggi.getMonth()+1).padStart(2,'0');
     const aaaa = oggi.getFullYear();
-    data.data_invio = `${gg}-${mm}-${aaaa}`;
-    data.iban          = (data.iban||'').toUpperCase();
-    data.codice_fiscale= (data.codice_fiscale||'').toUpperCase();
-    data.firma_base64  = canvas.toDataURL('image/png').split(',')[1];
+    data.data_invio      = `${gg}-${mm}-${aaaa}`;
+    data.iban            = (data.iban||'').toUpperCase();
+    data.codice_fiscale  = (data.codice_fiscale||'').toUpperCase();
+    data.firma_base64    = canvas.toDataURL('image/png').split(',')[1];
 
     // Allegati
     data.allegati = selectedFiles.length > 0
       ? await Promise.all(selectedFiles.map(async f => ({ nome: f.name, tipo: f.type, contenuto_base64: await fileToBase64(f) })))
       : [];
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner"></span> Invio in corso...';
-
-    try {
-      const res = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error(res.status);
-
-      successMsg.innerHTML = `
-        ✅ <strong>Registrazione inviata con successo!</strong><br>
-        Grazie ${data.nome}, ti contatteremo a breve.<br><br>
-        <button type="button" class="btn btn-pdf" onclick="generatePDF(${JSON.stringify(data).replace(/</g,'\\u003c')})">
-          📄 Scarica la tua copia PDF
-        </button>`;
-      successMsg.className = 'message success';
-      successMsg.style.display = 'block';
-      successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    } catch(err) {
-      errorMsg.textContent = '❌ Errore durante l\'invio. Riprova o contatta l\'ufficio HR.';
-      errorMsg.className = 'message error';
-      errorMsg.style.display = 'block';
-      console.error(err);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '✅ Invia registrazione';
-    }
+    pendingData = data;
+    mostraModaleConferma(data);
   });
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODALE DI CONFERMA
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalConferma">
+  <div class="modal">
+    <h3>🔍 Verifica i tuoi dati</h3>
+    <div id="modalBody"></div>
+    <div class="modal-buttons">
+      <button type="button" class="btn btn-secondary"
+        onclick="document.getElementById('modalConferma').classList.remove('open')">
+        ← Rivedi i dati
+      </button>
+      <button type="button" class="btn btn-primary" onclick="eseguiInvio()">
+        ✅ Conferma e invia
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
