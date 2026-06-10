@@ -1149,6 +1149,39 @@
     row('Datore precedente', data.azienda_prec);
     y += 4;
 
+    // Privacy
+    if (y > 200) { doc.addPage(); y = 20; }
+    sectionTitle('Dichiarazioni e Consensi');
+
+    const privacyTesto1 = 'Acconsento che TPS registri, elabori o trasmetta i miei dati personali, compresi i dati sensibili ai sensi dell\'art. 5 lett. c LPD del 25 settembre 2020 (RS. 235.1) comunicati in relazione alla candidatura per la locazione di servizi e/o il collocamento di personale o per qualsiasi altro rapporto contrattuale. Acconsento che i dati siano trasmessi a terzi in Svizzera o all\'estero, inclusi paesi senza livello adeguato di protezione dei dati (cfr. Allegato 1), ai sensi dell\'art. 17 al. 1 lett. a LPD.';
+    const privacyTesto2 = 'Con la firma del presente modulo autorizzo TPS a consultare e ad ottenere informazioni presso la competente CPC e precedenti datori di lavoro riguardanti le mie attività professionali passate e in particolare la mia classe salariale nei vari settori.';
+
+    function privacyRow(num, testo) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFontSize(7.5); doc.setFont(undefined,'bold');
+      doc.setTextColor(...blue);
+      doc.text(`${num}.`, margin, y);
+      doc.setFont(undefined,'normal');
+      doc.setTextColor(50,50,50);
+      const lines = doc.splitTextToSize(testo, W - margin*2 - 6);
+      doc.text(lines, margin + 6, y);
+      y += lines.length * 4 + 4;
+    }
+
+    doc.setFontSize(7.5); doc.setFont(undefined,'bold');
+    doc.setTextColor(26,120,60);
+    doc.text('✓ Consenso al trattamento dei dati personali (accettato)', margin, y);
+    y += 5;
+    privacyRow(1, privacyTesto1);
+
+    if (y > 260) { doc.addPage(); y = 20; }
+    doc.setFontSize(7.5); doc.setFont(undefined,'bold');
+    doc.setTextColor(26,120,60);
+    doc.text('✓ Autorizzazione alla verifica delle referenze (accettata)', margin, y);
+    y += 5;
+    privacyRow(2, privacyTesto2);
+    y += 4;
+
     // Firma
     if (y > 220) { doc.addPage(); y = 20; }
     sectionTitle('Firma Digitale');
@@ -1180,17 +1213,36 @@
   function generatePDF(data) {
     const doc = buildPDFDoc(data);
     const filename = `TPS_${data.cognome}_${data.nome}_${data.data_invio.replace(/\//g,'-')}.pdf`;
+
+    // Metodo 1: blob + link (Chrome, Firefox, Edge, Android)
     try {
       const blob = doc.output('blob');
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href = url; a.download = filename;
-      a.target = '_blank'; a.rel = 'noopener noreferrer';
-      document.body.appendChild(a); a.click();
-      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
-    } catch(err) {
-      window.open(doc.output('datauristring'), '_blank');
-    }
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 5000);
+      return;
+    } catch(e1) {}
+
+    // Metodo 2: data URI in nuova finestra (Safari iOS/macOS)
+    try {
+      const dataUri = doc.output('datauristring');
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.write(
+          `<html><head><title>${filename}</title></head><body style="margin:0">` +
+          `<embed width="100%" height="100%" src="${dataUri}" type="application/pdf"/>` +
+          `</body></html>`
+        );
+        return;
+      }
+    } catch(e2) {}
+
+    // Metodo 3: salva direttamente tramite jsPDF save
+    doc.save(filename);
   }
 
   // ─── GENERA PDF E RESTITUISCE BASE64 (per allegarlo al webhook) ──
