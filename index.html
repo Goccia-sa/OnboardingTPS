@@ -263,13 +263,18 @@
 
     /* SIGNATURE */
     #signatureCanvas {
-      display: block; width: 100%; height: 150px;
+      display: block; width: 100%; height: 180px;
       border: 1.5px solid var(--border); border-radius: 8px;
       background: white; cursor: crosshair;
       touch-action: none;
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
+      moz-user-select: none;
+    }
+    #signatureWrapper {
+      position: relative;
+      touch-action: none;
     }
 
     /* PRIVACY */
@@ -887,29 +892,29 @@
   setTimeout(resizeCanvas, 100);
   window.addEventListener('resize', () => { if (!hasSigned) resizeCanvas(); });
 
-  function getPos(e) {
+  // POINTER EVENTS — funziona su mouse, touch iOS, touch Android, stylus
+  function getPointerPos(e) {
     const r = canvas.getBoundingClientRect();
-    const scaleX = canvas.width  / (r.width  * (window.devicePixelRatio || 1));
-    const scaleY = canvas.height / (r.height * (window.devicePixelRatio || 1));
-    if (e.touches && e.touches.length > 0) {
-      const t = e.touches[0];
-      return { x: (t.clientX - r.left), y: (t.clientY - r.top) };
-    }
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    return {
+      x: (e.clientX - r.left) * (canvas.width  / r.width  / (window.devicePixelRatio || 1)),
+      y: (e.clientY - r.top)  * (canvas.height / r.height / (window.devicePixelRatio || 1))
+    };
   }
 
-  function sigStart(e) {
+  canvas.addEventListener('pointerdown', e => {
     e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
     isDrawing = true;
-    const p = getPos(e);
+    const p = getPointerPos(e);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     sigPlaceholder.style.display = 'none';
-  }
-  function sigDraw(e) {
+  }, { passive: false });
+
+  canvas.addEventListener('pointermove', e => {
     if (!isDrawing) return;
     e.preventDefault();
-    const p = getPos(e);
+    const p = getPointerPos(e);
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
     ctx.beginPath();
@@ -918,19 +923,11 @@
     sigStatus.textContent = '✅ Firma acquisita';
     sigStatus.style.color = '#38a169';
     canvas.style.borderColor = '#38a169';
-  }
-  function sigEnd(e) { isDrawing = false; }
+  }, { passive: false });
 
-  // Mouse
-  canvas.addEventListener('mousedown',  sigStart);
-  canvas.addEventListener('mousemove',  sigDraw);
-  canvas.addEventListener('mouseup',    sigEnd);
-  canvas.addEventListener('mouseleave', sigEnd);
-  // Touch — iOS Safari fix: usare { passive: false } + pointer events
-  canvas.addEventListener('touchstart', sigStart, { passive: false });
-  canvas.addEventListener('touchmove',  sigDraw,  { passive: false });
-  canvas.addEventListener('touchend',   sigEnd,   { passive: false });
-  canvas.addEventListener('touchcancel',sigEnd,   { passive: false });
+  canvas.addEventListener('pointerup',     e => { isDrawing = false; });
+  canvas.addEventListener('pointercancel', e => { isDrawing = false; });
+  canvas.addEventListener('pointerleave',  e => { isDrawing = false; });
   document.getElementById('clearSignature').addEventListener('click', () => {
     resizeCanvas(); hasSigned = false;
     sigPlaceholder.style.display = 'block';
@@ -1069,20 +1066,22 @@
     }
 
     const filename = `TPS_${data.cognome}_${data.nome}_${data.data_invio.replace(/\//g,'-')}.pdf`;
-    // Safari/iOS fix: usa output('blob') + URL.createObjectURL
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (isSafari) {
+    try {
+      // Metodo universale: blob + link click — funziona su Chrome, Firefox, Edge, Safari, Android, iOS
       const blob = doc.output('blob');
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href     = url;
       a.download = filename;
       a.target   = '_blank';
+      a.rel      = 'noopener noreferrer';
       document.body.appendChild(a);
       a.click();
-      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-    } else {
-      doc.save(filename);
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
+    } catch(err) {
+      // Fallback finale: apri il dataURI direttamente nel browser
+      const dataUri = doc.output('datauristring');
+      window.open(dataUri, '_blank');
     }
   }
 
@@ -1127,7 +1126,12 @@
       if (data[f]) data[f] = formatDateIT(data[f]);
     });
 
-    data.data_invio    = new Date().toLocaleDateString('it-IT');
+    // Formato data con trattini — le slash "/" creano sottocartelle in SharePoint!
+    const oggi = new Date();
+    const gg = String(oggi.getDate()).padStart(2,'0');
+    const mm = String(oggi.getMonth()+1).padStart(2,'0');
+    const aaaa = oggi.getFullYear();
+    data.data_invio = `${gg}-${mm}-${aaaa}`;
     data.iban          = (data.iban||'').toUpperCase();
     data.codice_fiscale= (data.codice_fiscale||'').toUpperCase();
     data.firma_base64  = canvas.toDataURL('image/png').split(',')[1];
