@@ -1062,7 +1062,8 @@
   }
 
   // GENERA PDF
-  function generatePDF(data) {
+  // ─── COSTRUISCE IL DOCUMENTO jsPDF (usato sia per download che per base64) ───
+  function buildPDFDoc(data) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const blue = [26, 58, 107];
@@ -1117,8 +1118,14 @@
     row('Email', data.email);
     y += 4;
 
+    sectionTitle('Contatto di Emergenza');
+    row('Nome', data.emerg_nome);
+    row('Telefono', data.emerg_telefono);
+    row('Relazione', data.emerg_relazione);
+    y += 4;
+
     sectionTitle('Permessi e Documenti');
-    row('Documento', `${data.doc_tipo} n° ${data.doc_numero}`);
+    row('Documento', `${data.doc_tipo||''} n° ${data.doc_numero||''}`);
     row('Scadenza documento', data.doc_scadenza);
     row('Tipo permesso', data.permesso_tipo);
     row('N° permesso', data.permesso_numero);
@@ -1137,7 +1144,7 @@
     row('Reparto', data.reparto);
     row('Data inizio', data.data_inizio);
     row('Tipo contratto', data.tipo_contratto);
-    row('Percentuale', data.percentuale);
+    row('Percentuale', data.percentuale ? data.percentuale + '%' : '');
     row('Titolo di studio', data.titolo_studio);
     row('Datore precedente', data.azienda_prec);
     y += 4;
@@ -1146,7 +1153,10 @@
     if (y > 220) { doc.addPage(); y = 20; }
     sectionTitle('Firma Digitale');
     try {
-      const sigData = canvas.toDataURL('image/png');
+      // Usa firma dal canvas se disponibile, altrimenti dal base64 salvato
+      const sigData = data.firma_base64
+        ? `data:image/png;base64,${data.firma_base64}`
+        : canvas.toDataURL('image/png');
       doc.addImage(sigData, 'PNG', margin, y, 80, 30);
       y += 35;
     } catch(e) {}
@@ -1163,24 +1173,32 @@
       doc.text(`Pagina ${i} di ${pages}`, W - margin, 293, { align: 'right' });
     }
 
+    return doc;
+  }
+
+  // ─── DOWNLOAD PDF (chiamato dal banner/pulsante) ─────────────────
+  function generatePDF(data) {
+    const doc = buildPDFDoc(data);
     const filename = `TPS_${data.cognome}_${data.nome}_${data.data_invio.replace(/\//g,'-')}.pdf`;
     try {
-      // Metodo universale: blob + link click — funziona su Chrome, Firefox, Edge, Safari, Android, iOS
       const blob = doc.output('blob');
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-      a.href     = url;
-      a.download = filename;
-      a.target   = '_blank';
-      a.rel      = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
+      a.href = url; a.download = filename;
+      a.target = '_blank'; a.rel = 'noopener noreferrer';
+      document.body.appendChild(a); a.click();
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
     } catch(err) {
-      // Fallback finale: apri il dataURI direttamente nel browser
-      const dataUri = doc.output('datauristring');
-      window.open(dataUri, '_blank');
+      window.open(doc.output('datauristring'), '_blank');
     }
+  }
+
+  // ─── GENERA PDF E RESTITUISCE BASE64 (per allegarlo al webhook) ──
+  function generatePDFBase64(data) {
+    const doc = buildPDFDoc(data);
+    // output('datauristring') → "data:application/pdf;base64,XXXX"
+    const dataUri = doc.output('datauristring');
+    return dataUri.split(',')[1]; // solo la parte base64
   }
 
   // ─── FLAG: impedisce doppio invio ───────────────────────────────
@@ -1420,10 +1438,14 @@
     data.codice_fiscale  = (data.codice_fiscale||'').toUpperCase();
     data.firma_base64    = canvas.toDataURL('image/png').split(',')[1];
 
-    // Allegati
+    // Allegati utente
     data.allegati = selectedFiles.length > 0
       ? await Promise.all(selectedFiles.map(async f => ({ nome: f.name, tipo: f.type, contenuto_base64: await fileToBase64(f) })))
       : [];
+
+    // PDF generato automaticamente — verrà salvato in SharePoint e allegato all'email
+    data.pdf_base64 = generatePDFBase64(data);
+    data.pdf_nome   = `TPS_${data.cognome}_${data.nome}_${data.data_invio}.pdf`;
 
     pendingData = data;
     mostraModaleConferma(data);
