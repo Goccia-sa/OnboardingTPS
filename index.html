@@ -263,18 +263,17 @@
 
     /* SIGNATURE */
     #signatureCanvas {
-      display: block; width: 100%; height: 180px;
-      border: 1.5px solid var(--border); border-radius: 8px;
-      background: white; cursor: crosshair;
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      cursor: crosshair;
       touch-action: none;
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
-      moz-user-select: none;
-    }
-    #signatureWrapper {
-      position: relative;
-      touch-action: none;
     }
 
     /* PRIVACY */
@@ -878,34 +877,41 @@
   const sigStatus      = document.getElementById('signatureStatus');
   let isDrawing = false, hasSigned = false;
 
-  function resizeCanvas() {
-    const ratio = window.devicePixelRatio || 1;
-    const rect  = canvas.getBoundingClientRect();
-    canvas.width  = rect.width  * ratio;
-    canvas.height = rect.height * ratio;
-    ctx.scale(ratio, ratio);
+  function initCanvas() {
+    // Dimensioni fisse alte qualità — niente resize dinamico
+    // CSS width:100% si occupa della visualizzazione responsive
+    canvas.width  = 1200;
+    canvas.height = 360;
     ctx.strokeStyle = '#1a202c';
-    ctx.lineWidth   = 2.2;
+    ctx.lineWidth   = 3;
     ctx.lineCap     = 'round';
     ctx.lineJoin    = 'round';
+    ctx.fillStyle   = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
-  setTimeout(resizeCanvas, 100);
-  window.addEventListener('resize', () => { if (!hasSigned) resizeCanvas(); });
 
-  // POINTER EVENTS — funziona su mouse, touch iOS, touch Android, stylus
-  function getPointerPos(e) {
-    const r = canvas.getBoundingClientRect();
+  function getScaledPos(e) {
+    // Calcola la posizione corretta tenendo conto dello scaling CSS
+    const rect   = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
     return {
-      x: (e.clientX - r.left) * (canvas.width  / r.width  / (window.devicePixelRatio || 1)),
-      y: (e.clientY - r.top)  * (canvas.height / r.height / (window.devicePixelRatio || 1))
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top)  * scaleY
     };
   }
 
+  initCanvas();
+  // Nessun resize — il canvas rimane sempre 1200x360 internamente
+
+  // POINTER EVENTS — funziona su mouse, touch iOS, touch Android, stylus
   canvas.addEventListener('pointerdown', e => {
     e.preventDefault();
     canvas.setPointerCapture(e.pointerId);
     isDrawing = true;
-    const p = getPointerPos(e);
+    const p = getScaledPos(e);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     sigPlaceholder.style.display = 'none';
@@ -914,7 +920,7 @@
   canvas.addEventListener('pointermove', e => {
     if (!isDrawing) return;
     e.preventDefault();
-    const p = getPointerPos(e);
+    const p = getScaledPos(e);
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
     ctx.beginPath();
@@ -925,11 +931,12 @@
     canvas.style.borderColor = '#38a169';
   }, { passive: false });
 
-  canvas.addEventListener('pointerup',     e => { isDrawing = false; });
-  canvas.addEventListener('pointercancel', e => { isDrawing = false; });
-  canvas.addEventListener('pointerleave',  e => { isDrawing = false; });
+  canvas.addEventListener('pointerup',     () => { isDrawing = false; });
+  canvas.addEventListener('pointercancel', () => { isDrawing = false; });
+  canvas.addEventListener('pointerleave',  () => { isDrawing = false; });
+
   document.getElementById('clearSignature').addEventListener('click', () => {
-    resizeCanvas(); hasSigned = false;
+    initCanvas(); hasSigned = false;
     sigPlaceholder.style.display = 'block';
     sigStatus.textContent = ''; canvas.style.borderColor = '';
   });
