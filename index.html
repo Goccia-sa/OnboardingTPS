@@ -1011,23 +1011,23 @@
   function mostraLoginStaff() {
     document.getElementById('accessoBox').innerHTML = `
       <div style="background:white;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.10);width:100%;max-width:400px;overflow:hidden;">
-        <div style="background:#1a3a6b;padding:22px 28px;display:flex;align-items:center;gap:14px;">
+        <div style="background:white;padding:22px 28px;display:flex;align-items:center;gap:14px;border-bottom:2px solid #e2e8f0;">
           <img src="https://goccia-sa.github.io/OnboardingTPS/logo.png" alt="TPS" style="height:40px;" onerror="this.style.display='none'">
-          <div style="color:white;">
+          <div style="color:#1a3a6b;">
             <div style="font-size:1rem;font-weight:700;">Team Personnel Solutions</div>
-            <div style="font-size:0.78rem;opacity:0.8;margin-top:2px;">Accesso riservato al personale</div>
+            <div style="font-size:0.78rem;color:#718096;margin-top:2px;">Accesso riservato al personale</div>
           </div>
         </div>
-        <div style="padding:28px;">
-          <p style="font-size:0.83rem;color:#718096;margin-bottom:18px;">Inserisci la password per accedere al pannello.</p>
+        <div style="padding:28px;background:#1a3a6b;border-radius:0 0 16px 16px;">
+          <p style="font-size:0.83rem;color:rgba(255,255,255,0.75);margin-bottom:18px;">Inserisci la password per accedere al pannello.</p>
           <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:0.82rem;font-weight:600;color:#1a202c;margin-bottom:6px;">Password</label>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:white;margin-bottom:6px;">Password</label>
             <input type="password" id="staffLoginPwd" placeholder="••••••••"
-              style="width:100%;padding:10px 14px;border:1.5px solid #d1d9e6;border-radius:8px;font-size:0.95rem;outline:none;"
+              style="width:100%;padding:10px 14px;border:1.5px solid rgba(255,255,255,0.3);border-radius:8px;font-size:0.95rem;outline:none;background:rgba(255,255,255,0.12);color:white;"
               onkeydown="if(event.key==='Enter') verificaPasswordLogin()">
           </div>
           <button onclick="verificaPasswordLogin()"
-            style="width:100%;background:#1a3a6b;color:white;border:none;border-radius:8px;padding:12px;font-size:0.95rem;font-weight:700;cursor:pointer;">
+            style="width:100%;background:white;color:#1a3a6b;border:none;border-radius:8px;padding:12px;font-size:0.95rem;font-weight:700;cursor:pointer;">
             Accedi
           </button>
           <div id="loginStaffError" style="display:none;background:#fde8e8;color:#c0392b;border-radius:8px;padding:10px 14px;font-size:0.83rem;margin-top:12px;"></div>
@@ -1036,19 +1036,85 @@
     document.getElementById('accessoBox').style.display = 'flex';
   }
 
+  // Tentativi password
+  let loginTentativi = 0;
+  const MAX_TENTATIVI = 3;
+  const BLOCCO_MS = 5 * 60 * 1000; // 5 minuti
+  let bloccatoFino = null;
+  let countdownInterval = null;
+
   async function verificaPasswordLogin() {
-    const pwd = document.getElementById('staffLoginPwd').value;
     const errEl = document.getElementById('loginStaffError');
+    const btn   = document.querySelector('#accessoBox button');
+    const input = document.getElementById('staffLoginPwd');
+
+    // Controlla se bloccato
+    if (bloccatoFino && Date.now() < bloccatoFino) {
+      const restanti = Math.ceil((bloccatoFino - Date.now()) / 1000);
+      errEl.textContent = `🔒 Troppi tentativi. Riprova tra ${restanti} secondi.`;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const pwd = input.value;
     if (!pwd) return;
+
     const hash = await sha256(pwd);
     const correctHash = await sha256('Ar@ncia2026');
+
     if (hash === correctHash) {
+      loginTentativi = 0;
+      bloccatoFino = null;
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
       document.getElementById('accessoBox').style.display = 'none';
       mostraMenuStaff();
     } else {
-      errEl.textContent = '❌ Password errata. Riprova.';
-      errEl.style.display = 'block';
-      document.getElementById('staffLoginPwd').value = '';
+      loginTentativi++;
+      input.value = '';
+
+      if (loginTentativi >= MAX_TENTATIVI) {
+        bloccatoFino = Date.now() + BLOCCO_MS;
+        if (btn) btn.disabled = true;
+        input.disabled = true;
+
+        // Countdown visivo
+        countdownInterval = setInterval(() => {
+          const restanti = Math.ceil((bloccatoFino - Date.now()) / 1000);
+          if (restanti <= 0) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            loginTentativi = 0;
+            bloccatoFino = null;
+            if (btn) btn.disabled = false;
+            input.disabled = false;
+            input.focus();
+            errEl.textContent = '✅ Puoi riprovare.';
+            errEl.style.background = '#d4edda';
+            errEl.style.color = '#1a7a3f';
+            errEl.style.border = '1px solid #a3d9b1';
+          } else {
+            const min = Math.floor(restanti / 60);
+            const sec = restanti % 60;
+            errEl.textContent = `🔒 Troppi tentativi errati. Riprova tra ${min}:${String(sec).padStart(2,'0')}.`;
+            errEl.style.background = '#fde8e8';
+            errEl.style.color = '#c0392b';
+            errEl.style.border = '1px solid #f5c6c6';
+          }
+          errEl.style.display = 'block';
+        }, 1000);
+
+      } else {
+        const rimasti = MAX_TENTATIVI - loginTentativi;
+        errEl.textContent = `❌ Password errata. Tentativi rimasti: ${rimasti}.`;
+        errEl.style.background = '#fde8e8';
+        errEl.style.color = '#c0392b';
+        errEl.style.border = '1px solid #f5c6c6';
+        errEl.style.display = 'block';
+        // Animazione shake sul campo
+        input.style.animation = 'none';
+        input.style.border = '1.5px solid #c0392b';
+        setTimeout(() => { input.style.border = '1.5px solid #d1d9e6'; }, 1500);
+      }
     }
   }
 
@@ -1342,28 +1408,59 @@
   }
 
   // GENERA PDF
+  // ─── CARICA LOGO COME BASE64 (una volta sola, poi in cache) ─────
+  let _logoBase64 = null;
+  async function caricaLogo() {
+    if (_logoBase64) return _logoBase64;
+    try {
+      const res = await fetch('https://goccia-sa.github.io/OnboardingTPS/logo.png');
+      const blob = await res.blob();
+      return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onloadend = () => { _logoBase64 = reader.result; resolve(_logoBase64); };
+        reader.readAsDataURL(blob);
+      });
+    } catch(e) { return null; }
+  }
+
   // ─── COSTRUISCE IL DOCUMENTO jsPDF (usato sia per download che per base64) ───
-  function buildPDFDoc(data) {
+  async function buildPDFDoc(data) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const blue = [26, 58, 107];
     const gray = [100, 110, 130];
     const W = 210, margin = 18;
 
-    // Header
+    // Carica logo
+    const logoData = await caricaLogo();
+
+    // Header — sfondo bianco con bordo blu in basso
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, W, 32, 'F');
     doc.setFillColor(...blue);
-    doc.rect(0, 0, W, 30, 'F');
-    doc.setTextColor(255,255,255);
-    doc.setFontSize(14); doc.setFont(undefined,'bold');
-    doc.text('Team Personnel Solutions', margin, 13);
-    doc.setFontSize(9); doc.setFont(undefined,'normal');
-    doc.text('we care, we listen, we deliver', margin, 20);
-    doc.setFontSize(11); doc.setFont(undefined,'bold');
+    doc.rect(0, 31, W, 1.5, 'F');
+
+    // Logo a sinistra
+    if (logoData) {
+      try { doc.addImage(logoData, 'PNG', margin, 4, 70, 22); } catch(e) {}
+    } else {
+      doc.setTextColor(...blue);
+      doc.setFontSize(13); doc.setFont(undefined,'bold');
+      doc.text('Team Personnel Solutions', margin, 14);
+      doc.setFontSize(8); doc.setFont(undefined,'normal');
+      doc.setTextColor(100,110,130);
+      doc.text('we care, we listen, we deliver', margin, 20);
+    }
+
+    // Titolo a destra
+    doc.setTextColor(...blue);
+    doc.setFontSize(10); doc.setFont(undefined,'bold');
     doc.text('REGISTRAZIONE NUOVO DIPENDENTE', W - margin, 13, { align: 'right' });
     doc.setFontSize(8); doc.setFont(undefined,'normal');
+    doc.setTextColor(100,110,130);
     doc.text(`Data: ${data.data_invio}`, W - margin, 20, { align: 'right' });
 
-    let y = 38;
+    let y = 40;
 
     function sectionTitle(title) {
       doc.setFillColor(235,241,250);
@@ -1490,8 +1587,8 @@
   }
 
   // ─── DOWNLOAD PDF (chiamato dal banner/pulsante) ─────────────────
-  function generatePDF(data) {
-    const doc = buildPDFDoc(data);
+  async function generatePDF(data) {
+    const doc = await buildPDFDoc(data);
     const filename = `TPS_${data.cognome}_${data.nome}_${data.data_invio.replace(/\//g,'-')}.pdf`;
 
     // Metodo 1: blob + link (Chrome, Firefox, Edge, Android)
@@ -1526,8 +1623,8 @@
   }
 
   // ─── GENERA PDF E RESTITUISCE BASE64 (per allegarlo al webhook) ──
-  function generatePDFBase64(data) {
-    const doc = buildPDFDoc(data);
+  async function generatePDFBase64(data) {
+    const doc = await buildPDFDoc(data);
     // output('datauristring') → "data:application/pdf;base64,XXXX"
     const dataUri = doc.output('datauristring');
     return dataUri.split(',')[1]; // solo la parte base64
@@ -1776,7 +1873,7 @@
       : [];
 
     // PDF generato automaticamente — verrà salvato in SharePoint e allegato all'email
-    data.pdf_base64 = generatePDFBase64(data);
+    data.pdf_base64 = await generatePDFBase64(data);
     data.pdf_nome   = `TPS_${data.cognome}_${data.nome}_${data.data_invio}.pdf`;
 
     // Token monouso — inviato al webhook per marcarlo come usato dopo invio
