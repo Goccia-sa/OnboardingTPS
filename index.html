@@ -261,6 +261,32 @@
       font-weight: 700; background: none; border: none; padding: 0;
     }
 
+    /* UPLOAD SLOT (allegati specifici) */
+    .upload-slot {
+      display: flex; align-items: center; gap: 12px;
+      border: 2px dashed var(--border); border-radius: 10px;
+      padding: 14px 16px; cursor: pointer;
+      background: #fafbfd; transition: all 0.2s;
+      position: relative;
+    }
+    .upload-slot:hover { border-color: var(--accent); background: #ebf5fb; }
+    .upload-slot.has-file {
+      border-color: #38a169; border-style: solid; background: #f0fff4;
+    }
+    .upload-slot.required-missing {
+      border-color: #e53e3e; border-style: solid; background: #fff5f5;
+    }
+    .upload-slot-optional { border-style: dashed; }
+    .slot-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .slot-text { font-size: 0.85rem; color: var(--text-muted); flex: 1; }
+    .upload-slot.has-file .slot-text { color: #276749; font-weight: 600; }
+    .slot-remove {
+      background: none; border: none; color: #e53e3e;
+      font-size: 1rem; cursor: pointer; padding: 2px 6px;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .slot-remove:hover { background: #fde8e8; }
+
     /* SIGNATURE */
     #signatureCanvas {
       display: block;
@@ -868,18 +894,78 @@
           <div><h2>Documenti da Allegare</h2><p>Carica copia dei tuoi documenti</p></div>
         </div>
         <div class="info-box">
-          📌 Allega: copia documento d'identità, permesso di soggiorno/lavoro, eventuali certificati di formazione.
+          📌 I campi contrassegnati con <strong style="color:#e53e3e">*</strong> sono obbligatori. Gli altri sono richiesti solo se applicabili.
         </div>
-        <div class="field">
-          <label>Carica i tuoi documenti</label>
-          <div class="upload-area" id="uploadArea">
-            <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
-            <div class="icon">📎</div>
-            <p><strong>Clicca qui</strong> o trascina i file</p>
-            <p style="margin-top:4px;font-size:0.78rem;">PDF, immagini, Word — max 10 MB per file</p>
+
+        <!-- 1. Documento identità fronte (SEMPRE obbligatorio) -->
+        <div class="field" style="margin-bottom:18px;">
+          <label>Documento d'identità — fronte <span class="req">*</span></label>
+          <div class="upload-slot" id="slot_doc_fronte" onclick="document.getElementById('input_doc_fronte').click()">
+            <input type="file" id="input_doc_fronte" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_doc_fronte','doc_fronte')" />
+            <span class="slot-icon">🪪</span>
+            <span class="slot-text" id="text_doc_fronte">Clicca per caricare (PDF o immagine)</span>
+            <button type="button" class="slot-remove" id="rm_doc_fronte" style="display:none" onclick="event.stopPropagation();clearSlot('input_doc_fronte','slot_doc_fronte','text_doc_fronte','doc_fronte','rm_doc_fronte')">✕</button>
           </div>
-          <div class="file-list" id="fileList"></div>
         </div>
+
+        <!-- 2. Documento identità retro (SEMPRE obbligatorio) -->
+        <div class="field" style="margin-bottom:18px;">
+          <label>Documento d'identità — retro <span class="req">*</span></label>
+          <div class="upload-slot" id="slot_doc_retro" onclick="document.getElementById('input_doc_retro').click()">
+            <input type="file" id="input_doc_retro" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_doc_retro','doc_retro')" />
+            <span class="slot-icon">🪪</span>
+            <span class="slot-text" id="text_doc_retro">Clicca per caricare (PDF o immagine)</span>
+            <button type="button" class="slot-remove" id="rm_doc_retro" style="display:none" onclick="event.stopPropagation();clearSlot('input_doc_retro','slot_doc_retro','text_doc_retro','doc_retro','rm_doc_retro')">✕</button>
+          </div>
+        </div>
+
+        <!-- 3. Permesso di lavoro (obbligatorio se ha permesso) -->
+        <div class="field" style="margin-bottom:18px;" id="slot_permesso_wrap">
+          <label id="label_permesso_doc">Permesso di lavoro <span class="req" id="req_permesso" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se hai un permesso)</small></label>
+          <div class="upload-slot" id="slot_permesso" onclick="document.getElementById('input_permesso').click()">
+            <input type="file" id="input_permesso" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_permesso','permesso_doc')" />
+            <span class="slot-icon">📋</span>
+            <span class="slot-text" id="text_permesso">Clicca per caricare (PDF o immagine)</span>
+            <button type="button" class="slot-remove" id="rm_permesso" style="display:none" onclick="event.stopPropagation();clearSlot('input_permesso','slot_permesso','text_permesso','permesso_doc','rm_permesso')">✕</button>
+          </div>
+          <div id="info_permesso" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Hai indicato un permesso di lavoro — allega la copia.</div>
+        </div>
+
+        <!-- 4. Carta AVS (obbligatoria se compilato numero AVS) -->
+        <div class="field" style="margin-bottom:18px;" id="slot_avs_wrap">
+          <label>Carta AVS <span class="req" id="req_avs" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatoria se hai indicato il numero AVS)</small></label>
+          <div class="upload-slot" id="slot_avs" onclick="document.getElementById('input_avs').click()">
+            <input type="file" id="input_avs" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_avs','avs_doc')" />
+            <span class="slot-icon">🏥</span>
+            <span class="slot-text" id="text_avs">Clicca per caricare (PDF o immagine)</span>
+            <button type="button" class="slot-remove" id="rm_avs" style="display:none" onclick="event.stopPropagation();clearSlot('input_avs','slot_avs','text_avs','avs_doc','rm_avs')">✕</button>
+          </div>
+          <div id="info_avs" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Hai indicato il numero AVS — allega la copia della carta.</div>
+        </div>
+
+        <!-- 5. Retro documento bancario (obbligatorio se IBAN compilato) -->
+        <div class="field" style="margin-bottom:18px;" id="slot_banca_wrap">
+          <label>Documento bancario — retro <span class="req" id="req_banca" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se hai indicato l'IBAN)</small></label>
+          <div class="upload-slot" id="slot_banca" onclick="document.getElementById('input_banca').click()">
+            <input type="file" id="input_banca" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_banca','banca_doc')" />
+            <span class="slot-icon">🏦</span>
+            <span class="slot-text" id="text_banca">Clicca per caricare (PDF o immagine)</span>
+            <button type="button" class="slot-remove" id="rm_banca" style="display:none" onclick="event.stopPropagation();clearSlot('input_banca','slot_banca','text_banca','banca_doc','rm_banca')">✕</button>
+          </div>
+          <div id="info_banca" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Hai indicato un IBAN — allega il retro del documento bancario.</div>
+        </div>
+
+        <!-- 6. Allegato libero (facoltativo) -->
+        <div class="field" style="margin-bottom:8px;">
+          <label>Altro documento <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+          <div class="upload-slot upload-slot-optional" id="slot_altro" onclick="document.getElementById('input_altro').click()">
+            <input type="file" id="input_altro" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none" onchange="handleSlotFile(this,'slot_altro','altro_doc')" />
+            <span class="slot-icon">📄</span>
+            <span class="slot-text" id="text_altro">Clicca per caricare un documento aggiuntivo</span>
+            <button type="button" class="slot-remove" id="rm_altro" style="display:none" onclick="event.stopPropagation();clearSlot('input_altro','slot_altro','text_altro','altro_doc','rm_altro')">✕</button>
+          </div>
+        </div>
+
       </div>
 
       <!-- ===== SEZIONE 7: PRIVACY E FIRMA ===== -->
@@ -1211,7 +1297,15 @@
   }
 
   // Avvia controllo accesso al caricamento pagina
-  window.addEventListener('DOMContentLoaded', controllaAccesso);
+  window.addEventListener('DOMContentLoaded', () => {
+    controllaAccesso();
+    // Listener per messaggi condizionali allegati
+    ['avs','permesso_tipo','iban'].forEach(name => {
+      const el = document.querySelector(`[name="${name}"]`);
+      if (el) el.addEventListener('input', aggiornaMsgCondizionali);
+      if (el) el.addEventListener('change', aggiornaMsgCondizionali);
+    });
+  });
   // ============================================================
 
   let currentStep = 0;
@@ -1261,6 +1355,9 @@
 
   // VALIDATION
   function validateSection(step) {
+    // Step 5 = allegati: logica dedicata
+    if (step === 5) return validateAllegati();
+
     const section  = document.querySelectorAll('.form-section')[step];
     const required = section.querySelectorAll('[required]');
     let valid = true;
@@ -1378,31 +1475,127 @@
     sigStatus.textContent = ''; canvas.style.borderColor = '';
   });
 
-  // UPLOAD FILE
-  const fileInput = document.getElementById('fileInput');
-  const fileList  = document.getElementById('fileList');
-  let selectedFiles = [];
-  fileInput.addEventListener('change', () => { addFiles(Array.from(fileInput.files)); fileInput.value=''; });
-  const ua = document.getElementById('uploadArea');
-  ua.addEventListener('dragover', e => { e.preventDefault(); ua.classList.add('dragover'); });
-  ua.addEventListener('dragleave', () => ua.classList.remove('dragover'));
-  ua.addEventListener('drop', e => { e.preventDefault(); ua.classList.remove('dragover'); addFiles(Array.from(e.dataTransfer.files)); });
-  function addFiles(files) {
-    files.forEach(f => {
-      if (f.size > 10*1024*1024) { alert(`"${f.name}" supera i 10 MB.`); return; }
-      if (!selectedFiles.find(x => x.name===f.name && x.size===f.size)) selectedFiles.push(f);
-    });
-    renderFiles();
+  // ─── UPLOAD SLOT (allegati specifici) ───────────────────────────
+  // Mappa: key → { file: File|null, slotId, textId, removeId }
+  const slotFiles = {
+    doc_fronte:  { file: null, slotId: 'slot_doc_fronte',  textId: 'text_doc_fronte', removeId: 'rm_doc_fronte' },
+    doc_retro:   { file: null, slotId: 'slot_doc_retro',   textId: 'text_doc_retro',  removeId: 'rm_doc_retro'  },
+    permesso_doc:{ file: null, slotId: 'slot_permesso',    textId: 'text_permesso',   removeId: 'rm_permesso'   },
+    avs_doc:     { file: null, slotId: 'slot_avs',         textId: 'text_avs',        removeId: 'rm_avs'        },
+    banca_doc:   { file: null, slotId: 'slot_banca',       textId: 'text_banca',      removeId: 'rm_banca'      },
+    altro_doc:   { file: null, slotId: 'slot_altro',       textId: 'text_altro',      removeId: 'rm_altro'      }
+  };
+
+  function handleSlotFile(input, slotId, key) {
+    const f = input.files[0];
+    if (!f) return;
+    if (f.size > 10*1024*1024) { alert(`"${f.name}" supera i 10 MB.`); input.value=''; return; }
+    slotFiles[key].file = f;
+    const slot = document.getElementById(slotId);
+    const txt  = document.getElementById(slotFiles[key].textId);
+    const rm   = document.getElementById(slotFiles[key].removeId);
+    slot.classList.add('has-file');
+    slot.classList.remove('required-missing');
+    txt.textContent = `✅ ${f.name} (${(f.size/1024).toFixed(0)} KB)`;
+    if (rm) rm.style.display = 'inline-block';
+    input.value = '';
+    // Nasconde avvisi condizionali
+    aggiornaMsgCondizionali();
   }
-  function renderFiles() {
-    fileList.innerHTML = '';
-    selectedFiles.forEach((f,i) => {
-      const d = document.createElement('div');
-      d.className = 'file-item';
-      d.innerHTML = `<span>📄</span><span>${f.name}</span><span style="color:var(--text-muted);font-size:0.78rem">${(f.size/1024).toFixed(0)} KB</span><button class="remove" onclick="selectedFiles.splice(${i},1);renderFiles()">✕</button>`;
-      fileList.appendChild(d);
-    });
+
+  function clearSlot(inputId, slotId, textId, key, removeId) {
+    slotFiles[key].file = null;
+    const slot = document.getElementById(slotId);
+    const txt  = document.getElementById(textId);
+    const rm   = document.getElementById(removeId);
+    slot.classList.remove('has-file','required-missing');
+    txt.textContent = key === 'altro_doc'
+      ? 'Clicca per caricare un documento aggiuntivo'
+      : 'Clicca per caricare (PDF o immagine)';
+    if (rm) rm.style.display = 'none';
+    document.getElementById(inputId).value = '';
+    aggiornaMsgCondizionali();
   }
+
+  // Mostra/nasconde avvisi condizionali in tempo reale
+  function aggiornaMsgCondizionali() {
+    const haPermesso = (document.querySelector('[name="permesso_tipo"]')?.value||'').trim() !== '' &&
+                       (document.querySelector('[name="permesso_tipo"]')?.value||'') !== '— Seleziona —';
+    const haAVS      = (document.querySelector('[name="avs"]')?.value||'').trim() !== '';
+    const haIBAN     = (document.querySelector('[name="iban"]')?.value||'').trim() !== '';
+
+    // Permesso
+    document.getElementById('req_permesso').style.display      = haPermesso ? 'inline' : 'none';
+    document.getElementById('info_permesso').style.display     = (haPermesso && !slotFiles.permesso_doc.file) ? 'block' : 'none';
+    // AVS
+    document.getElementById('req_avs').style.display           = haAVS ? 'inline' : 'none';
+    document.getElementById('info_avs').style.display          = (haAVS && !slotFiles.avs_doc.file) ? 'block' : 'none';
+    // Banca
+    document.getElementById('req_banca').style.display         = haIBAN ? 'inline' : 'none';
+    document.getElementById('info_banca').style.display        = (haIBAN && !slotFiles.banca_doc.file) ? 'block' : 'none';
+  }
+
+  // Validazione sezione allegati (step 5)
+  function validateAllegati() {
+    let valid = true;
+    const errEl = document.getElementById('errorMsg');
+
+    // Sempre obbligatori
+    ['doc_fronte','doc_retro'].forEach(key => {
+      const slot = document.getElementById(slotFiles[key].slotId);
+      if (!slotFiles[key].file) {
+        slot.classList.add('required-missing');
+        valid = false;
+      } else {
+        slot.classList.remove('required-missing');
+      }
+    });
+
+    // Condizionali
+    const haPermesso = (document.querySelector('[name="permesso_tipo"]')?.value||'').trim() !== '' &&
+                       (document.querySelector('[name="permesso_tipo"]')?.value||'') !== '— Seleziona —';
+    const haAVS      = (document.querySelector('[name="avs"]')?.value||'').trim() !== '';
+    const haIBAN     = (document.querySelector('[name="iban"]')?.value||'').trim() !== '';
+
+    if (haPermesso && !slotFiles.permesso_doc.file) {
+      document.getElementById('slot_permesso').classList.add('required-missing');
+      valid = false;
+    } else { document.getElementById('slot_permesso').classList.remove('required-missing'); }
+
+    if (haAVS && !slotFiles.avs_doc.file) {
+      document.getElementById('slot_avs').classList.add('required-missing');
+      valid = false;
+    } else { document.getElementById('slot_avs').classList.remove('required-missing'); }
+
+    if (haIBAN && !slotFiles.banca_doc.file) {
+      document.getElementById('slot_banca').classList.add('required-missing');
+      valid = false;
+    } else { document.getElementById('slot_banca').classList.remove('required-missing'); }
+
+    if (!valid) {
+      errEl.textContent = '⚠️ Allega tutti i documenti obbligatori evidenziati in rosso.';
+      errEl.className = 'message error';
+      errEl.style.display = 'block';
+      setTimeout(() => errEl.style.display = 'none', 4000);
+    }
+    return valid;
+  }
+
+  // Reset allegati (usato dopo invio)
+  function resetAllegati() {
+    Object.keys(slotFiles).forEach(key => {
+      const s = slotFiles[key];
+      s.file = null;
+      const slot = document.getElementById(s.slotId);
+      const txt  = document.getElementById(s.textId);
+      const rm   = document.getElementById(s.removeId);
+      if (slot) { slot.classList.remove('has-file','required-missing'); }
+      if (txt)  { txt.textContent = key === 'altro_doc' ? 'Clicca per caricare un documento aggiuntivo' : 'Clicca per caricare (PDF o immagine)'; }
+      if (rm)   { rm.style.display = 'none'; }
+    });
+    aggiornaMsgCondizionali();
+  }
+
   function fileToBase64(f) {
     return new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f); });
   }
@@ -1589,7 +1782,7 @@
   // ─── DOWNLOAD PDF (chiamato dal banner/pulsante) ─────────────────
   async function generatePDF(data) {
     const doc = await buildPDFDoc(data);
-    const filename = `TPS_${data.cognome}_${data.nome}_${data.data_invio.replace(/\//g,'-')}.pdf`;
+    const filename = `${data.cognome}_${data.nome}_Registrazione_${data.data_invio.replace(/\//g,'-')}.pdf`;
 
     // Metodo 1: blob + link (Chrome, Firefox, Edge, Android)
     try {
@@ -1759,8 +1952,7 @@
       canvas.style.borderColor = '';
 
       // 3. Reset allegati
-      selectedFiles = [];
-      renderFiles();
+      resetAllegati();
 
       // 4. Torna al passo 0 (prima sezione)
       const sections = document.querySelectorAll('.form-section');
@@ -1867,14 +2059,30 @@
     data.codice_fiscale  = (data.codice_fiscale||'').toUpperCase();
     data.firma_base64    = canvas.toDataURL('image/png').split(',')[1];
 
-    // Allegati utente
-    data.allegati = selectedFiles.length > 0
-      ? await Promise.all(selectedFiles.map(async f => ({ nome: f.name, tipo: f.type, contenuto_base64: await fileToBase64(f) })))
-      : [];
+    // Allegati utente (slot specifici)
+    const nomiSlot = {
+      doc_fronte:   'ID_fronte',
+      doc_retro:    'ID_retro',
+      permesso_doc: 'Permesso_lavoro',
+      avs_doc:      'Carta_AVS',
+      banca_doc:    'Documento_bancario',
+      altro_doc:    'Altro'
+    };
+    const allegatiArr = [];
+    for (const [key, s] of Object.entries(slotFiles)) {
+      if (s.file) {
+        allegatiArr.push({
+          nome: `${data.cognome}_${data.nome}_${nomiSlot[key]}${s.file.name.substring(s.file.name.lastIndexOf('.'))}`,
+          tipo: s.file.type,
+          contenuto_base64: await fileToBase64(s.file)
+        });
+      }
+    }
+    data.allegati = allegatiArr;
 
     // PDF generato automaticamente — verrà salvato in SharePoint e allegato all'email
     data.pdf_base64 = await generatePDFBase64(data);
-    data.pdf_nome   = `TPS_${data.cognome}_${data.nome}_${data.data_invio}.pdf`;
+    data.pdf_nome   = `${data.cognome}_${data.nome}_Registrazione_${data.data_invio}.pdf`;
 
     // Token monouso — inviato al webhook per marcarlo come usato dopo invio
     if (tokenCorrente) data.token = tokenCorrente;
