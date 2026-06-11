@@ -1680,6 +1680,51 @@
     return new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f); });
   }
 
+  // ─── COMPRESSIONE IMMAGINI lato browser ─────────────────────────
+  // Ridimensiona le immagini (max 1600px lato lungo, qualità 75%) prima dell'invio.
+  // I PDF e gli altri file NON immagine vengono lasciati intatti.
+  // Restituisce { base64, ext } — ext è l'estensione corretta del file inviato.
+  const MAX_LATO = 1600;
+  const JPEG_QUALITY = 0.75;
+
+  function estensione(nomeFile) {
+    const i = nomeFile.lastIndexOf('.');
+    return i >= 0 ? nomeFile.substring(i) : '';
+  }
+
+  async function preparaAllegato(file) {
+    // Solo immagini jpg/png vengono compresse; tutto il resto resta com'è
+    const isImg = /^image\/(jpe?g|png)$/i.test(file.type);
+    if (!isImg) {
+      return { base64: await fileToBase64(file), ext: estensione(file.name) };
+    }
+    try {
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file);
+      });
+      const img = await new Promise((res, rej) => {
+        const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
+      });
+      // Calcola le nuove dimensioni mantenendo le proporzioni
+      let { width: w, height: h } = img;
+      if (w > MAX_LATO || h > MAX_LATO) {
+        if (w >= h) { h = Math.round(h * MAX_LATO / w); w = MAX_LATO; }
+        else        { w = Math.round(w * MAX_LATO / h); h = MAX_LATO; }
+      }
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const cx = cv.getContext('2d');
+      cx.fillStyle = '#ffffff';            // sfondo bianco (i PNG trasparenti diventano JPEG)
+      cx.fillRect(0, 0, w, h);
+      cx.drawImage(img, 0, 0, w, h);
+      const jpegDataUrl = cv.toDataURL('image/jpeg', JPEG_QUALITY);
+      return { base64: jpegDataUrl.split(',')[1], ext: '.jpg' };
+    } catch(e) {
+      // Se la compressione fallisce per qualsiasi motivo, invia l'originale
+      return { base64: await fileToBase64(file), ext: estensione(file.name) };
+    }
+  }
+
   // GENERA PDF
   // ─── CARICA LOGO COME BASE64 (una volta sola, poi in cache) ─────
   let _logoBase64 = null;
@@ -2091,6 +2136,60 @@
     }
   }
 
+  // ─── VALIDAZIONI DATI ───────────────────────────────────────────
+  // IBAN: formato + checksum (algoritmo mod-97 ISO 13616)
+  function ibanValido(iban) {
+    const s = (iban||'').replace(/\s+/g,'').toUpperCase();
+    if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}$/.test(s)) return false;
+    // sposta i primi 4 caratteri in fondo, converte lettere in numeri (A=10..Z=35)
+    const riarr = s.slice(4) + s.slice(0,4);
+    const num = riarr.replace(/[A-Z]/g, c => (c.charCodeAt(0)-55).toString());
+    // mod 97 a blocchi (per evitare numeri troppo grandi)
+    let resto = '';
+    for (const ch of num) { resto = (parseInt(resto+ch,10) % 97).toString(); }
+    return parseInt(resto,10) === 1;
+  }
+
+  // AVS svizzero: 756.XXXX.XXXX.XX con cifra di controllo EAN-13
+  function avsValido(avs) {
+    const d = (avs||'').replace(/\D/g,'');
+    if (!/^756\d{10}$/.test(d)) return false;
+    // checksum EAN-13: pesi 1,3 alternati sui primi 12, controllo sull'ultimo
+    let somma = 0;
+    for (let i = 0; i < 12; i++) somma += parseInt(d[i],10) * (i % 2 === 0 ? 1 : 3);
+    const check = (10 - (somma % 10)) % 10;
+    return check === parseInt(d[12],10);
+  }
+
+  // Esegue tutte le validazioni sui dati raccolti. Ritorna un messaggio d'errore o null.
+  function validaDati(d) {
+    // IBAN: opzionale, ma se compilato deve essere valido
+    if (d.iban && d.iban.trim() && !ibanValido(d.iban)) {
+      return '⚠️ L\'IBAN inserito non è valido. Controlla di averlo copiato correttamente.';
+    }
+    // AVS: opzionale, ma se compilato deve essere valido
+    if (d.avs && d.avs.trim() && !avsValido(d.avs)) {
+      return '⚠️ Il numero AVS non è valido. Formato atteso: 756.XXXX.XXXX.XX';
+    }
+    // Data di nascita: non nel futuro, non oltre 120 anni fa
+    if (d.data_nascita) {
+      const nasc = new Date(d.data_nascita);
+      const oggi = new Date();
+      const min  = new Date(); min.setFullYear(oggi.getFullYear() - 120);
+      if (nasc > oggi)  return '⚠️ La data di nascita non può essere nel futuro.';
+      if (nasc < min)   return '⚠️ La data di nascita non è valida.';
+    }
+    // Email: formato base (è già required, rafforziamo)
+    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) {
+      return '⚠️ L\'indirizzo email non è valido.';
+    }
+    // Telefono: almeno 8 cifre (ignora +, spazi, trattini)
+    if (d.telefono && d.telefono.replace(/\D/g,'').length < 8) {
+      return '⚠️ Il numero di telefono non sembra valido (troppo corto).';
+    }
+    return null;
+  }
+
   // ─── SUBMIT: validazione + raccolta dati + modale ───────────────
   document.getElementById('onboardingForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -2119,10 +2218,28 @@
       return;
     }
 
-    // Raccolta dati
+    // Raccolta dati — con limite di lunghezza per evitare payload abnormi nei campi testo
     const form = e.target;
     const data = {};
-    new FormData(form).forEach((v,k) => { if (k !== 'file') data[k] = v; });
+    new FormData(form).forEach((v,k) => {
+      if (k === 'file') return;
+      if (typeof v === 'string') {
+        const maxLen = (k === 'note') ? 2000 : 200;   // "note" più lungo, gli altri brevi
+        v = v.trim().slice(0, maxLen);
+      }
+      data[k] = v;
+    });
+
+    // Validazioni dati (IBAN, AVS, data nascita, email, telefono)
+    // Eseguite ORA che le date sono ancora in formato ISO (yyyy-mm-dd)
+    const erroreValidazione = validaDati(data);
+    if (erroreValidazione) {
+      errorMsg.textContent = erroreValidazione;
+      errorMsg.className = 'message error';
+      errorMsg.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     // Date formattate
     ['data_nascita','doc_rilascio','doc_scadenza','permesso_scadenza','data_inizio'].forEach(f => {
@@ -2151,10 +2268,11 @@
     const allegatiArr = [];
     for (const [key, s] of Object.entries(slotFiles)) {
       if (s.file) {
+        const prep = await preparaAllegato(s.file);   // comprime le immagini, lascia intatti i PDF
         allegatiArr.push({
-          nome: `${data.cognome}_${data.nome}_${nomiSlot[key]}${s.file.name.substring(s.file.name.lastIndexOf('.'))}`,
+          nome: `${data.cognome}_${data.nome}_${nomiSlot[key]}${prep.ext}`,
           tipo: s.file.type,
-          contenuto_base64: await fileToBase64(s.file)
+          contenuto_base64: prep.base64
         });
       }
     }
@@ -2166,6 +2284,18 @@
 
     // Token monouso — inviato al webhook per marcarlo come usato dopo invio
     if (tokenCorrente) data.token = tokenCorrente;
+
+    // Rete di sicurezza: blocca payload troppo grandi (es. PDF allegati pesanti
+    // non comprimibili) che farebbero fallire l'invio a Power Automate.
+    const MAX_PAYLOAD_MB = 30;
+    const dimMB = new Blob([JSON.stringify(data)]).size / (1024*1024);
+    if (dimMB > MAX_PAYLOAD_MB) {
+      errorMsg.textContent = `⚠️ I documenti allegati sono troppo pesanti (${dimMB.toFixed(1)} MB). Riduci o comprimi i file PDF e riprova.`;
+      errorMsg.className = 'message error';
+      errorMsg.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     pendingData = data;
     mostraModaleConferma(data);
