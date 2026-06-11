@@ -83,8 +83,10 @@
     }
     .step.active .step-dot  { background: var(--blue); color: white; }
     .step.done .step-dot    { background: #38a169; color: white; }
+    .step.incompleta .step-dot { background: #e53e3e; color: white; }
     .step-label { font-size: 0.65rem; color: var(--text-muted); text-align: center; max-width: 60px; }
     .step.active .step-label { color: var(--blue); font-weight: 600; }
+    .step.incompleta .step-label { color: #e53e3e; }
 
     /* FORM BODY */
     .form-body {
@@ -1376,15 +1378,55 @@
     document.getElementById('formContainer').style.display = 'none';
   }
 
+  // Colora un singolo campo: rosso se vuoto/non valido, normale se ok.
+  function valutaCampo(el) {
+    if (!el) return;
+    let ok = true;
+    if (el.type === 'checkbox') ok = el.checked;
+    else {
+      const v = (el.value||'').trim();
+      ok = v !== '';
+      // validazione di formato sui campi noti (solo se compilati)
+      if (ok && el.name === 'avs')      ok = avsValido(v);
+      if (ok && el.name === 'iban')     ok = ibanValido(v);
+      if (ok && el.name === 'email')    ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      if (ok && el.name === 'telefono') ok = v.replace(/\D/g,'').length >= 8;
+    }
+    el.style.border  = (!ok && el.type !== 'checkbox') ? '1.5px solid #e53e3e' : '';
+    el.style.outline = (!ok && el.type === 'checkbox') ? '2px solid #e53e3e' : '';
+  }
+
   // Avvia controllo accesso al caricamento pagina
   window.addEventListener('DOMContentLoaded', () => {
     controllaAccesso();
-    // Listener per messaggi condizionali allegati
+    // Listener per messaggi condizionali allegati + ricalcolo stato pallini
     ['avs','permesso_tipo','iban'].forEach(name => {
       const el = document.querySelector(`[name="${name}"]`);
-      if (el) el.addEventListener('input', aggiornaMsgCondizionali);
-      if (el) el.addEventListener('change', aggiornaMsgCondizionali);
+      if (el) { el.addEventListener('input', () => { aggiornaMsgCondizionali(); aggiornaStatoStep(); });
+                el.addEventListener('change', () => { aggiornaMsgCondizionali(); aggiornaStatoStep(); }); }
     });
+
+    // Click sui numeri in testata → navigazione libera
+    document.querySelectorAll('.step').forEach(s => {
+      s.addEventListener('click', () => {
+        const n = parseInt(s.getAttribute('data-step'), 10);
+        if (!isNaN(n)) vaiAStep(n);
+      });
+    });
+
+    // Feedback immediato sui campi obbligatori: bordo rosso all'uscita (blur), ricalcolo pallini
+    document.querySelectorAll('#onboardingForm [required]').forEach(el => {
+      const evt = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'blur';
+      el.addEventListener(evt, () => { valutaCampo(el); aggiornaStatoStep(); });
+    });
+    // Validazione di formato anche su campi non-required ma controllati (avs/iban)
+    ['avs','iban'].forEach(name => {
+      const el = document.querySelector(`[name="${name}"]`);
+      if (el) el.addEventListener('blur', () => { valutaCampo(el); aggiornaStatoStep(); });
+    });
+
+    // Stato iniziale dei pallini e del pulsante invia
+    aggiornaStatoStep();
   });
   // ============================================================
 
@@ -1408,22 +1450,12 @@
     }
   }
 
-  // NAVIGATION
+  // NAVIGATION — libera: avanti/indietro senza bloccare (il blocco è solo sull'invio finale)
   function navigate(dir) {
-    if (dir === 1 && !validateSection(currentStep)) return;
-    const sections = document.querySelectorAll('.form-section');
-    const steps    = document.querySelectorAll('.step');
-    steps[currentStep].classList.remove('active');
-    steps[currentStep].classList.add('done');
-    sections[currentStep].classList.remove('active');
-    currentStep += dir;
-    if (currentStep < 0) currentStep = 0;
-    if (currentStep >= totalSteps) currentStep = totalSteps - 1;
-    sections[currentStep].classList.add('active');
-    steps[currentStep].classList.add('active');
-    steps[currentStep].classList.remove('done');
-    updateNavButtons();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    let n = currentStep + dir;
+    if (n < 0) n = 0;
+    if (n >= totalSteps) n = totalSteps - 1;
+    vaiAStep(n);
   }
 
   function updateNavButtons() {
@@ -1460,6 +1492,74 @@
       setTimeout(() => errEl.style.display = 'none', 3000);
     }
     return valid;
+  }
+
+  // ─── STATO SEZIONI E NAVIGAZIONE LIBERA ─────────────────────────
+  // Ritorna true se la sezione è completa. SILENZIOSA: non tocca la UI.
+  // Considera obbligatori "sempre" + condizionali (allegati) + formato (IBAN/AVS/email/tel).
+  function sezioneCompleta(step) {
+    if (step === 5) return allegatiCompleti();   // allegati: logica dedicata silenziosa
+
+    const section  = document.querySelectorAll('.form-section')[step];
+    if (!section) return true;
+
+    // 1. campi required compilati
+    const required = section.querySelectorAll('[required]');
+    for (const el of required) {
+      if (el.type === 'checkbox') { if (!el.checked) return false; }
+      else if (!el.value.trim())  { return false; }
+    }
+
+    // 2. validazione di formato sui campi presenti in questa sezione (se compilati)
+    const campo = (nome) => section.querySelector(`[name="${nome}"]`);
+    const valOf = (nome) => (campo(nome)?.value || '').trim();
+    if (campo('avs')      && valOf('avs')      && !avsValido(valOf('avs')))   return false;
+    if (campo('iban')     && valOf('iban')     && !ibanValido(valOf('iban'))) return false;
+    if (campo('email')    && valOf('email')    && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valOf('email'))) return false;
+    if (campo('telefono') && valOf('telefono') && valOf('telefono').replace(/\D/g,'').length < 8) return false;
+
+    // 3. sezione Privacy (step 6): oltre alle checkbox serve anche la firma
+    if (step === 6 && !hasSigned) return false;
+
+    return true;
+  }
+
+  // Tutte le 7 sezioni complete?
+  function tuttoCompleto() {
+    for (let i = 0; i < totalSteps; i++) { if (!sezioneCompleta(i)) return false; }
+    return true;
+  }
+
+  // Aggiorna i pallini in testata (verde=completa, rosso=incompleta) e abilita/disabilita Invia.
+  function aggiornaStatoStep() {
+    const steps = document.querySelectorAll('.step');
+    steps.forEach((s, i) => {
+      const completa = sezioneCompleta(i);
+      s.classList.toggle('done', completa && i !== currentStep);
+      s.classList.toggle('incompleta', !completa);
+      // la sezione corrente resta evidenziata in blu (.active)
+      if (i === currentStep) { s.classList.add('active'); s.classList.remove('done'); }
+      else                   { s.classList.remove('active'); }
+    });
+    // Blocco invio finché c'è anche un solo pallino rosso
+    const btn = document.getElementById('btnSubmit');
+    if (btn) {
+      const ok = tuttoCompleto();
+      btn.disabled = !ok;
+      btn.title = ok ? '' : 'Completa le sezioni evidenziate in rosso per inviare.';
+    }
+  }
+
+  // Cambia sezione SENZA validare (usato da click testata e dai tasti).
+  function vaiAStep(n) {
+    if (n < 0 || n >= totalSteps) return;
+    const sections = document.querySelectorAll('.form-section');
+    sections[currentStep].classList.remove('active');
+    sections[n].classList.add('active');
+    currentStep = n;
+    updateNavButtons();
+    aggiornaStatoStep();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // EMERGENZA REPEATER
@@ -1545,7 +1645,7 @@
     canvas.style.borderColor = '#38a169';
   }, { passive: false });
 
-  canvas.addEventListener('pointerup',     () => { isDrawing = false; });
+  canvas.addEventListener('pointerup',     () => { isDrawing = false; aggiornaStatoStep(); });
   canvas.addEventListener('pointercancel', () => { isDrawing = false; });
   canvas.addEventListener('pointerleave',  () => { isDrawing = false; });
 
@@ -1553,6 +1653,7 @@
     initCanvas(); hasSigned = false;
     sigPlaceholder.style.display = 'block';
     sigStatus.textContent = ''; canvas.style.borderColor = '';
+    aggiornaStatoStep();
   });
 
   // ─── UPLOAD SLOT (allegati specifici) ───────────────────────────
@@ -1613,9 +1714,27 @@
     // Banca
     document.getElementById('req_banca').style.display         = haIBAN ? 'inline' : 'none';
     document.getElementById('info_banca').style.display        = (haIBAN && !slotFiles.banca_doc.file) ? 'block' : 'none';
+
+    // Ricalcola i pallini in testata (caricamento/rimozione allegati cambia lo stato sez. 5)
+    if (typeof aggiornaStatoStep === 'function') aggiornaStatoStep();
   }
 
-  // Validazione sezione allegati (step 5)
+  // Versione SILENZIOSA: ritorna solo true/false senza toccare la UI.
+  // Usata da sezioneCompleta() per calcolare lo stato dei pallini in testata.
+  function allegatiCompleti() {
+    const haPermesso = (document.querySelector('[name="permesso_tipo"]')?.value||'').trim() !== '' &&
+                       (document.querySelector('[name="permesso_tipo"]')?.value||'') !== '— Seleziona —';
+    const haAVS      = (document.querySelector('[name="avs"]')?.value||'').trim() !== '';
+    const haIBAN     = (document.querySelector('[name="iban"]')?.value||'').trim() !== '';
+
+    if (!slotFiles.doc_fronte.file || !slotFiles.doc_retro.file) return false;
+    if (haPermesso && !slotFiles.permesso_doc.file) return false;
+    if (haAVS      && !slotFiles.avs_doc.file)      return false;
+    if (haIBAN     && !slotFiles.banca_doc.file)    return false;
+    return true;
+  }
+
+  // Validazione sezione allegati (step 5) — con feedback visivo (bordi rossi + messaggio)
   function validateAllegati() {
     let valid = true;
     const errEl = document.getElementById('errorMsg');
@@ -2083,11 +2202,14 @@
       const sections = document.querySelectorAll('.form-section');
       const steps    = document.querySelectorAll('.step');
       sections.forEach(s => s.classList.remove('active'));
-      steps.forEach(s => { s.classList.remove('active','done'); });
+      steps.forEach(s => { s.classList.remove('active','done','incompleta'); });
       sections[0].classList.add('active');
       steps[0].classList.add('active');
       currentStep = 0;
+      // pulisci i bordi rossi rimasti sui campi
+      document.querySelectorAll('#onboardingForm [required]').forEach(el => { el.style.border=''; el.style.outline=''; });
       updateNavButtons();
+      aggiornaStatoStep();
 
       // 5. Nascondi messaggi precedenti e mostra il banner di successo in cima
       successMsg.style.display = 'none';
