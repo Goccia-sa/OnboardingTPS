@@ -1153,13 +1153,16 @@
     const pwd = input.value;
     if (!pwd) return;
 
-    const hash = await sha256(pwd);
-    const correctHash = await sha256('Ar@ncia2026');
+    // Verifica la password lato Power Automate (soloVerifica = non genera token/email)
+    if (btn) { btn.disabled = true; btn.textContent = 'Verifica...'; }
+    const pwdValida = await verificaPasswordServer(pwd);
+    if (btn) { btn.disabled = false; btn.textContent = 'Accedi'; }
 
-    if (hash === correctHash) {
+    if (pwdValida) {
       loginTentativi = 0;
       bloccatoFino = null;
       if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      staffPwdMem = pwd;  // memorizzata in memoria per gli invii successivi (NON nel sorgente)
       document.getElementById('accessoBox').style.display = 'none';
       mostraMenuStaff();
     } else {
@@ -1235,9 +1238,9 @@
     const pwd = document.getElementById('staffPwd').value;
     const errEl = document.getElementById('pwdError');
     if (!pwd) return;
-    const hash = await sha256(pwd);
-    const correctHash = await sha256('Ar@ncia2026');
-    if (hash === correctHash) {
+    const ok = await verificaPasswordServer(pwd);
+    if (ok) {
+      staffPwdMem = pwd;  // memorizza per gli invii
       document.getElementById('pwdStep').style.display = 'none';
       document.getElementById('invioForm').style.display = 'block';
       errEl.style.display = 'none';
@@ -1248,9 +1251,22 @@
     }
   }
 
-  async function sha256(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  // Password staff tenuta in memoria dopo il login (mai scritta nel sorgente)
+  let staffPwdMem = null;
+
+  // Verifica la password chiamando il flusso con soloVerifica:true.
+  // Il flusso risponde 200 {ok:true} se corretta, 401 se errata. Non genera token/email.
+  async function verificaPasswordServer(pwd) {
+    try {
+      const res = await fetch(WEBHOOK_GENERA_TOKEN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd, soloVerifica: true })
+      });
+      if (!res.ok) return false;           // 401 = password errata
+      const json = await res.json();
+      return json.ok === true;
+    } catch(e) { return false; }
   }
 
   // ─── Genera token e restituisce il link ─────────────────────────
@@ -1260,8 +1276,9 @@
     const res = await fetch(WEBHOOK_GENERA_TOKEN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, cognome, email, canale: canale || 'email' })
+      body: JSON.stringify({ nome, cognome, email, canale: canale || 'email', password: staffPwdMem })
     });
+    if (res.status === 401) throw new Error('PWD');   // password staff non valida
     if (!res.ok) throw new Error('HTTP ' + res.status);
     // Il flusso Power Automate restituisce il token nel body
     try {
@@ -1303,7 +1320,8 @@
       mostraInvioMsg(`✅ Link inviato a <strong>${email}</strong>! Valido 7 giorni.`, true);
       resetInvioForm();
     } catch(e) {
-      mostraInvioMsg('❌ Errore durante l\'invio. Riprova.', false);
+      if (e.message === 'PWD') mostraInvioMsg('🔒 Sessione non valida. Ricarica la pagina e rientra con la password.', false);
+      else mostraInvioMsg('❌ Errore durante l\'invio. Riprova.', false);
     } finally {
       btn.disabled = false;
       btn.innerHTML = '📩 Invia via email';
@@ -1340,7 +1358,8 @@
       mostraInvioMsg(`✅ WhatsApp aperto per <strong>${nome} ${cognome}</strong>. Invia il messaggio dalla tua app.`, true);
       resetInvioForm();
     } catch(e) {
-      mostraInvioMsg('❌ Errore durante la generazione del link. Riprova.', false);
+      if (e.message === 'PWD') mostraInvioMsg('🔒 Sessione non valida. Ricarica la pagina e rientra con la password.', false);
+      else mostraInvioMsg('❌ Errore durante la generazione del link. Riprova.', false);
     } finally {
       btn.disabled = false;
       btn.innerHTML = '💬 Invia via WhatsApp';
