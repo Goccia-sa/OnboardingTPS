@@ -660,8 +660,8 @@
             <input type="text" name="citta" required placeholder="Es. Lugano" />
           </div>
           <div class="field">
-            <label>Cantone <span class="req">*</span></label>
-            <select name="cantone" required>
+            <label>Cantone <small style="color:var(--text-muted);font-weight:400">(se in Svizzera)</small></label>
+            <select name="cantone">
               <option value="">— Seleziona —</option>
             </select>
           </div>
@@ -1019,7 +1019,7 @@
               <label class="radio-opt"><input type="radio" name="cv_mandato" value="Si" /> Sì</label>
               <label class="radio-opt"><input type="radio" name="cv_mandato" value="No" /> No</label>
             </div>
-            <div id="info_cv" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">📎 Per favore alleghi il CV nella sezione Allegati, insieme a una foto.</div>
+            <div id="info_cv" style="font-size:0.78rem;color:var(--blue);margin-top:6px;display:none;">📎 Se vuole, può allegare il CV nella sezione Allegati, insieme a una foto del suo volto.</div>
           </div>
           <div class="field">
             <label>Ha già lavorato tramite agenzia? <span class="req">*</span></label>
@@ -1161,28 +1161,26 @@
           <div id="info_banca" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Hai indicato un IBAN — allega il retro del documento bancario.</div>
         </div>
 
-        <!-- 6. CV (obbligatorio se non ancora inviato) -->
+        <!-- 6. CV (facoltativo) -->
         <div class="field" style="margin-bottom:18px;" id="slot_cv_wrap">
-          <label>Curriculum Vitae <span class="req" id="req_cv" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se non l'hai già mandato)</small></label>
+          <label>Curriculum Vitae <small style="color:var(--text-muted);font-weight:400">(facoltativo, consigliato se non l'hai già mandato)</small></label>
           <div class="upload-slot" id="slot_cv" onclick="document.getElementById('input_cv').click()">
             <input type="file" id="input_cv" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none" onchange="handleSlotFile(this,'slot_cv','cv_doc')" />
             <span class="slot-icon">📄</span>
             <span class="slot-text" id="text_cv">Clicca per caricare (PDF o documento)</span>
             <button type="button" class="slot-remove" id="rm_cv" style="display:none" onclick="event.stopPropagation();clearSlot('input_cv','slot_cv','text_cv','cv_doc','rm_cv')">✕</button>
           </div>
-          <div id="info_cv_doc" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Non hai ancora mandato il CV — allegalo qui.</div>
         </div>
 
-        <!-- 7. Foto (obbligatoria se CV non ancora inviato) -->
+        <!-- 7. Foto del suo volto (facoltativa) -->
         <div class="field" style="margin-bottom:18px;" id="slot_foto_wrap">
-          <label>Foto <span class="req" id="req_foto" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatoria insieme al CV)</small></label>
+          <label>Foto del suo volto <small style="color:var(--text-muted);font-weight:400">(facoltativa, consigliata insieme al CV)</small></label>
           <div class="upload-slot" id="slot_foto" onclick="document.getElementById('input_foto').click()">
             <input type="file" id="input_foto" accept=".jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_foto','foto_doc')" />
             <span class="slot-icon">📷</span>
             <span class="slot-text" id="text_foto">Clicca per caricare una foto</span>
             <button type="button" class="slot-remove" id="rm_foto" style="display:none" onclick="event.stopPropagation();clearSlot('input_foto','slot_foto','text_foto','foto_doc','rm_foto')">✕</button>
           </div>
-          <div id="info_foto" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Allega anche una foto insieme al CV.</div>
         </div>
 
         <!-- 8. Allegato libero (facoltativo) -->
@@ -2102,14 +2100,15 @@
     return {
       haPermesso: radioVal('permesso_valido') === 'Si',
       haAVS:      val('avs') !== '',
-      haIBAN:     val('iban') !== '',
-      serveCV:    radioVal('cv_mandato') === 'No'
+      haIBAN:     val('iban') !== ''
     };
+    // Nota: CV e foto del volto sono sempre FACOLTATIVI (l'avviso "info_cv"
+    // nella sezione Lavorativa è solo un promemoria, non rende obbligatori gli slot).
   }
 
   // Mostra/nasconde avvisi condizionali in tempo reale
   function aggiornaMsgCondizionali() {
-    const { haPermesso, haAVS, haIBAN, serveCV } = condizioniAllegati();
+    const { haPermesso, haAVS, haIBAN } = condizioniAllegati();
 
     // Permesso
     document.getElementById('req_permesso').style.display      = haPermesso ? 'inline' : 'none';
@@ -2120,11 +2119,6 @@
     // Banca
     document.getElementById('req_banca').style.display         = haIBAN ? 'inline' : 'none';
     document.getElementById('info_banca').style.display        = (haIBAN && !slotFiles.banca_doc.file) ? 'block' : 'none';
-    // CV + Foto
-    document.getElementById('req_cv').style.display            = serveCV ? 'inline' : 'none';
-    document.getElementById('info_cv_doc').style.display       = (serveCV && !slotFiles.cv_doc.file) ? 'block' : 'none';
-    document.getElementById('req_foto').style.display          = serveCV ? 'inline' : 'none';
-    document.getElementById('info_foto').style.display         = (serveCV && !slotFiles.foto_doc.file) ? 'block' : 'none';
 
     // Ricalcola i pallini in testata (caricamento/rimozione allegati cambia lo stato sez. 9)
     if (typeof aggiornaStatoStep === 'function') aggiornaStatoStep();
@@ -2133,13 +2127,12 @@
   // Versione SILENZIOSA: ritorna solo true/false senza toccare la UI.
   // Usata da sezioneCompleta() per calcolare lo stato dei pallini in testata.
   function allegatiCompleti() {
-    const { haPermesso, haAVS, haIBAN, serveCV } = condizioniAllegati();
+    const { haPermesso, haAVS, haIBAN } = condizioniAllegati();
 
     if (!slotFiles.doc_fronte.file || !slotFiles.doc_retro.file) return false;
     if (haPermesso && !slotFiles.permesso_doc.file) return false;
     if (haAVS      && !slotFiles.avs_doc.file)      return false;
     if (haIBAN     && !slotFiles.banca_doc.file)    return false;
-    if (serveCV    && (!slotFiles.cv_doc.file || !slotFiles.foto_doc.file)) return false;
     return true;
   }
 
@@ -2147,13 +2140,12 @@
   function validateAllegati() {
     let valid = true;
     const errEl = document.getElementById('errorMsg');
-    const { haPermesso, haAVS, haIBAN, serveCV } = condizioniAllegati();
+    const { haPermesso, haAVS, haIBAN } = condizioniAllegati();
 
-    // Slot obbligatori adesso (sempre + condizionali attivi)
+    // Slot obbligatori adesso (sempre + condizionali attivi). CV e foto sono facoltativi.
     const obbligatori = {
       doc_fronte: true, doc_retro: true,
-      permesso_doc: haPermesso, avs_doc: haAVS, banca_doc: haIBAN,
-      cv_doc: serveCV, foto_doc: serveCV
+      permesso_doc: haPermesso, avs_doc: haAVS, banca_doc: haIBAN
     };
     for (const [key, richiesto] of Object.entries(obbligatori)) {
       const slot = document.getElementById(slotFiles[key].slotId);
@@ -2916,7 +2908,7 @@
       avs_doc:      'Carta_AVS',
       banca_doc:    'Documento_bancario',
       cv_doc:       'CV',
-      foto_doc:     'Foto',
+      foto_doc:     'Foto_volto',
       altro_doc:    'Altro'
     };
     const allegatiArr = [];
