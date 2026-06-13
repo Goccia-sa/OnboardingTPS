@@ -1,0 +1,9 @@
+{
+  "name": "onboarding-tps-api",
+  "version": "1.0.0",
+  "description": "Proxy serverless tra il form di onboarding e i flussi Power Automate: nasconde le URL+firme dei webhook.",
+  "main": "src/functions/*.js",
+  "dependencies": {
+    "@azure/functions": "^4.5.0"
+  }
+}

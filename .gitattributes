@@ -1,0 +1,6 @@
+# Il sito (index.html) resta CRLF come nel repo storico.
+# I file del backend Node.js girano su Linux (Azure Functions): forza LF.
+*.html text eol=crlf
+api/**     text eol=lf
+*.js       text eol=lf
+*.json     text eol=lf
