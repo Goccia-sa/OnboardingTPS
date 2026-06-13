@@ -1250,9 +1250,12 @@
 
 <script>
   // ============================================================
-  const WEBHOOK_URL        = "https://default8c117e9b8be34d23b8f9cf2f96156a.2f.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cf31c11c35fd41e2b3fbeb80d4b85196/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=95Va7e9zIEgqD1_AoLs-YmPSog1-9eYYkwpZ0DqBfjU";
-  const WEBHOOK_VALIDA_TOKEN = "https://default8c117e9b8be34d23b8f9cf2f96156a.2f.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d4b2ed064d7444d2be4c63a2b544be90/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=EHRWjtPmWpxCXjiAygzqwy4aqWKarlVvDn27mdFsJ80"; // flusso 2
-  const WEBHOOK_GENERA_TOKEN = "https://default8c117e9b8be34d23b8f9cf2f96156a.2f.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/61fb7e01c74d4709b042d21c1df65c29/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5_W1uBk2U3ICTI5v7w2JXQrUlVMB8bYVld8RzrAjMXU"; // flusso 3 (genera token + invia email)
+  // Rotte del proxy serverless (Azure Static Web Apps). Le URL+firme reali dei
+  // flussi Power Automate NON sono più nel client: vivono solo come application
+  // settings lato server (WEBHOOK_URL / WEBHOOK_VALIDA_TOKEN / WEBHOOK_GENERA_TOKEN).
+  const WEBHOOK_URL          = "/api/invia";         // flusso 1 (invio registrazione)
+  const WEBHOOK_VALIDA_TOKEN = "/api/valida-token";  // flusso 2 (validazione link)
+  const WEBHOOK_GENERA_TOKEN = "/api/genera-token";  // flusso 3 (password staff + genera token/email)
 
   // ─── CONTROLLO ACCESSO (token / staff) ───────────────────────────
   let tokenCorrente = null;
