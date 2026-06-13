@@ -87,6 +87,13 @@
     .step-label { font-size: 0.65rem; color: var(--text-muted); text-align: center; max-width: 60px; }
     .step.active .step-label { color: var(--blue); font-weight: 600; }
     .step.incompleta .step-label { color: #e53e3e; }
+    /* 10 passi: su schermi stretti pallini più piccoli e niente etichette */
+    @media (max-width: 680px) {
+      .progress-bar-wrap { padding: 12px 16px; }
+      .step-dot { width: 22px; height: 22px; font-size: 0.65rem; }
+      .step-label { display: none; }
+      .steps::before { top: 11px; }
+    }
 
     /* FORM BODY */
     .form-body {
@@ -140,6 +147,43 @@
 
     .field { display: flex; flex-direction: column; gap: 5px; }
     .field.full { grid-column: 1 / -1; }
+
+    /* Campi condizionali nascosti finché la condizione non si attiva */
+    .cond-hidden { display: none !important; }
+
+    /* Radio Sì/No a pillole */
+    .radio-si-no { display: flex; gap: 10px; }
+    .radio-si-no .radio-opt {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 20px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: #fafbfd;
+      cursor: pointer;
+      font-size: 0.9rem; font-weight: 500; color: var(--text);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .radio-si-no input[type="radio"] { accent-color: var(--blue); margin: 0; }
+    .radio-si-no .radio-opt:has(input:checked) {
+      border-color: var(--blue); background: #eef4fb; color: var(--blue); font-weight: 600;
+    }
+
+    /* Griglia checkbox (patenti) */
+    .check-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .check-grid .check-opt {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: #fafbfd;
+      cursor: pointer;
+      font-size: 0.85rem; font-weight: 500; color: var(--text);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .check-grid input[type="checkbox"] { accent-color: var(--blue); margin: 0; }
+    .check-grid .check-opt:has(input:checked) {
+      border-color: var(--blue); background: #eef4fb; color: var(--blue); font-weight: 600;
+    }
 
     label { font-size: 0.82rem; font-weight: 600; color: #3a4a6b; }
     label .req { color: #e53e3e; margin-left: 2px; }
@@ -548,12 +592,15 @@
   <div class="progress-bar-wrap">
     <div class="steps" id="stepsBar">
       <div class="step active" data-step="0"><div class="step-dot">1</div><div class="step-label">Anagrafica</div></div>
-      <div class="step" data-step="1"><div class="step-dot">2</div><div class="step-label">Contatti</div></div>
-      <div class="step" data-step="2"><div class="step-dot">3</div><div class="step-label">Documenti</div></div>
-      <div class="step" data-step="3"><div class="step-dot">4</div><div class="step-label">Famiglia</div></div>
-      <div class="step" data-step="4"><div class="step-dot">5</div><div class="step-label">Lavoro</div></div>
-      <div class="step" data-step="5"><div class="step-dot">6</div><div class="step-label">Allegati</div></div>
-      <div class="step" data-step="6"><div class="step-dot">7</div><div class="step-label">Privacy</div></div>
+      <div class="step" data-step="1"><div class="step-dot">2</div><div class="step-label">Famiglia</div></div>
+      <div class="step" data-step="2"><div class="step-dot">3</div><div class="step-label">Genitori</div></div>
+      <div class="step" data-step="3"><div class="step-dot">4</div><div class="step-label">Emergenza</div></div>
+      <div class="step" data-step="4"><div class="step-dot">5</div><div class="step-label">Documenti</div></div>
+      <div class="step" data-step="5"><div class="step-dot">6</div><div class="step-label">Lavorativa</div></div>
+      <div class="step" data-step="6"><div class="step-dot">7</div><div class="step-label">Salute</div></div>
+      <div class="step" data-step="7"><div class="step-dot">8</div><div class="step-label">Salario</div></div>
+      <div class="step" data-step="8"><div class="step-dot">9</div><div class="step-label">Allegati</div></div>
+      <div class="step" data-step="9"><div class="step-dot">10</div><div class="step-label">Privacy</div></div>
     </div>
   </div>
 
@@ -577,6 +624,15 @@
             <input type="text" name="cognome" required placeholder="Es. Rossi" />
           </div>
           <div class="field">
+            <label>Sesso</label>
+            <select name="sesso">
+              <option value="">— Seleziona —</option>
+              <option>Uomo</option>
+              <option>Donna</option>
+              <option>Non indicato</option>
+            </select>
+          </div>
+          <div class="field">
             <label>Data di nascita <span class="req">*</span></label>
             <div class="date-wrapper">
               <div class="date-display placeholder" id="disp_nascita"><span>gg/mm/aaaa</span><span>📅</span></div>
@@ -585,58 +641,173 @@
           </div>
           <div class="field">
             <label>Luogo di nascita <span class="req">*</span></label>
-            <input type="text" name="luogo_nascita" required placeholder="Es. Roma" />
-          </div>
-          <div class="field">
-            <label>Nazionalità <span class="req">*</span></label>
-            <input type="text" name="nazionalita" required placeholder="Es. Italiana, Svizzera..." />
-          </div>
-          <div class="field">
-            <label>Codice Fiscale <small style="color:var(--text-muted);font-weight:400">(solo IT)</small></label>
-            <input type="text" name="codice_fiscale" placeholder="RSSMRA80A01H501U" maxlength="16" style="text-transform:uppercase" />
-          </div>
-          <div class="field">
-            <label>Numero AVS <small style="color:var(--text-muted);font-weight:400">(CH)</small></label>
-            <input type="text" name="avs" placeholder="756.XXXX.XXXX.XX" />
-          </div>
-          <div class="field">
-            <label>Sesso</label>
-            <select name="sesso">
-              <option value="">— Seleziona —</option>
-              <option>Maschile</option>
-              <option>Femminile</option>
-              <option>Preferisco non indicarlo</option>
-            </select>
+            <input type="text" name="luogo_nascita" required placeholder="Es. Bellinzona" />
           </div>
           <div class="field full">
-            <label>Indirizzo di residenza <span class="req">*</span></label>
+            <label>Indirizzo <span class="req">*</span></label>
             <input type="text" name="indirizzo" required placeholder="Via/Strada, numero civico" />
+          </div>
+          <div class="field full">
+            <label>Indirizzo 2 <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+            <input type="text" name="indirizzo2" placeholder="Complemento di indirizzo" />
           </div>
           <div class="field">
             <label>CAP / NPA <span class="req">*</span></label>
-            <input type="text" name="cap" required placeholder="Es. 6900" />
+            <input type="text" name="cap" required inputmode="numeric" placeholder="Es. 6900" />
           </div>
           <div class="field">
             <label>Città <span class="req">*</span></label>
             <input type="text" name="citta" required placeholder="Es. Lugano" />
           </div>
           <div class="field">
-            <label>Paese <span class="req">*</span></label>
-            <input type="text" name="paese" required placeholder="Es. Svizzera" />
+            <label>Cantone <span class="req">*</span></label>
+            <select name="cantone" required>
+              <option value="">— Seleziona —</option>
+            </select>
           </div>
           <div class="field">
-            <label>Telefono <span class="req">*</span></label>
-            <input type="tel" name="telefono" required placeholder="+41 79 123 45 67" />
+            <label>Nazione <span class="req">*</span></label>
+            <select name="nazione" required>
+              <option value="">— Seleziona —</option>
+            </select>
           </div>
           <div class="field">
+            <label>Telefono <span class="req">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se manca il cellulare)</small></label>
+            <input type="tel" name="telefono" placeholder="+41 91 123 45 67" />
+          </div>
+          <div class="field">
+            <label>Cellulare personale <span class="req">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se manca il telefono)</small></label>
+            <input type="tel" name="cellulare" placeholder="+41 79 123 45 67" />
+          </div>
+          <div class="field full">
             <label>Email personale <span class="req">*</span></label>
             <input type="email" name="email" required placeholder="mario.rossi@email.com" />
           </div>
         </div>
       </div>
 
-      <!-- ===== SEZIONE 2: CONTATTI EMERGENZA ===== -->
+      <!-- ===== SEZIONE 2: FAMIGLIA ===== -->
       <div class="form-section" data-section="1">
+        <div class="section-header">
+          <div class="section-icon">👨‍👩‍👧</div>
+          <div><h2>Famiglia</h2><p>Stato civile e informazioni sui familiari</p></div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Stato civile <span class="req">*</span></label>
+            <select name="stato_civile" required>
+              <option value="">— Seleziona —</option>
+              <option>Celibe/Nubile</option>
+              <option>Sposato/a</option>
+              <option>Divorziato/a</option>
+              <option>Separato/a</option>
+              <option>Vedovo/a</option>
+              <option>Convivente</option>
+              <option>Unione registrata</option>
+            </select>
+          </div>
+          <div class="field cond-hidden" id="wrap_data_stato_civile">
+            <label>Data matrimonio, separazione, vedovanza <span class="req">*</span></label>
+            <div class="date-wrapper">
+              <div class="date-display placeholder" id="disp_data_stato_civile"><span>gg/mm/aaaa</span><span>📅</span></div>
+              <input type="date" name="data_stato_civile" onchange="updDate(this,'disp_data_stato_civile')" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Nr. figli con obbligo di mantenimento <span class="req">*</span></label>
+            <select name="figli_carico" required>
+              <option value="">— Seleziona —</option>
+              <option>0</option><option>1</option><option>2</option><option>3</option>
+              <option>4</option><option>5</option><option>6</option><option>7</option>
+              <option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+            </select>
+          </div>
+          <div class="field cond-hidden" id="wrap_monoparentale">
+            <label>Famiglia monoparentale <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="famiglia_monoparentale" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="famiglia_monoparentale" value="No" /> No</label>
+            </div>
+          </div>
+        </div>
+
+        <div id="wrap_coniuge" class="cond-hidden">
+          <div class="subsection-title">Dati del coniuge / partner registrato</div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Nome coniuge <span class="req">*</span></label>
+              <input type="text" name="coniuge_nome" placeholder="Es. Anna" />
+            </div>
+            <div class="field">
+              <label>Cognome coniuge <span class="req">*</span></label>
+              <input type="text" name="coniuge_cognome" placeholder="Es. Rossi" />
+            </div>
+            <div class="field">
+              <label>Data di nascita coniuge <span class="req">*</span></label>
+              <div class="date-wrapper">
+                <div class="date-display placeholder" id="disp_coniuge_nascita"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <input type="date" name="coniuge_data_nascita" onchange="updDate(this,'disp_coniuge_nascita')" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Numero AVS coniuge <span class="req">*</span></label>
+              <input type="text" name="coniuge_avs" placeholder="756.XXXX.XXXX.XX" />
+            </div>
+            <div class="field">
+              <label>Coniuge lavora? <span class="req">*</span></label>
+              <div class="radio-si-no">
+                <label class="radio-opt"><input type="radio" name="coniuge_lavora" value="Si" /> Sì</label>
+                <label class="radio-opt"><input type="radio" name="coniuge_lavora" value="No" /> No</label>
+              </div>
+            </div>
+            <div class="field">
+              <label>Luogo di lavoro del coniuge <span class="req">*</span></label>
+              <select name="coniuge_luogo_lavoro">
+                <option value="">— Seleziona —</option>
+                <option>Svizzera</option>
+                <option>Estero</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Data inizio attività del coniuge <span class="req">*</span></label>
+              <div class="date-wrapper">
+                <div class="date-display placeholder" id="disp_coniuge_attivita"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <input type="date" name="coniuge_data_inizio_attivita" onchange="updDate(this,'disp_coniuge_attivita')" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SEZIONE 3: GENITORI ===== -->
+      <div class="form-section" data-section="2">
+        <div class="section-header">
+          <div class="section-icon">👪</div>
+          <div><h2>Genitori</h2><p>Informazioni necessarie per il permesso di lavoro</p></div>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>Dovete fare un nuovo permesso di lavoro? <span class="req">*</span></label>
+          <div class="radio-si-no">
+            <label class="radio-opt"><input type="radio" name="nuovo_permesso" value="Si" /> Sì</label>
+            <label class="radio-opt"><input type="radio" name="nuovo_permesso" value="No" /> No</label>
+          </div>
+        </div>
+        <div id="wrap_genitori" class="cond-hidden">
+          <div class="grid-2">
+            <div class="field">
+              <label>Nome e Cognome madre <span class="req">*</span></label>
+              <input type="text" name="madre_nome" placeholder="Es. Maria Bianchi" />
+            </div>
+            <div class="field">
+              <label>Nome e Cognome padre <span class="req">*</span></label>
+              <input type="text" name="padre_nome" placeholder="Es. Giuseppe Rossi" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SEZIONE 4: CONTATTI EMERGENZA ===== -->
+      <div class="form-section" data-section="3">
         <div class="section-header">
           <div class="section-icon">🆘</div>
           <div><h2>Contatti di Emergenza</h2><p>Persone da contattare in caso di necessità</p></div>
@@ -656,6 +827,7 @@
                   <option>Genitore</option>
                   <option>Figlio/a</option>
                   <option>Fratello/Sorella</option>
+                  <option>Famigliare</option>
                   <option>Amico/a</option>
                   <option>Altro</option>
                 </select>
@@ -674,230 +846,255 @@
         <button type="button" class="btn-add" onclick="addEmergenza()">+ Aggiungi contatto</button>
       </div>
 
-      <!-- ===== SEZIONE 3: PERMESSI E DOCUMENTI ===== -->
-      <div class="form-section" data-section="2">
+      <!-- ===== SEZIONE 5: DOCUMENTI ===== -->
+      <div class="form-section" data-section="4">
         <div class="section-header">
           <div class="section-icon">📋</div>
-          <div><h2>Permessi e Documenti</h2><p>Documenti di identità e permessi di lavoro</p></div>
+          <div><h2>Documenti</h2><p>Nazionalità, documenti di identità e permessi di lavoro</p></div>
         </div>
 
-        <div class="subsection-title">Documento d'identità</div>
         <div class="grid-2">
           <div class="field">
-            <label>Tipo documento <span class="req">*</span></label>
+            <label>Nazionalità <span class="req">*</span></label>
+            <select name="nazionalita" required>
+              <option value="">— Seleziona —</option>
+              <option>Svizzera</option>
+              <option>Estero</option>
+            </select>
+          </div>
+          <div class="field cond-hidden" id="wrap_nazionalita_estera">
+            <label>Nazionalità estera <span class="req">*</span></label>
+            <select name="nazionalita_estera">
+              <option value="">— Seleziona —</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tipo di documento <span class="req">*</span></label>
             <select name="doc_tipo" required>
               <option value="">— Seleziona —</option>
-              <option>Carta d'identità</option>
               <option>Passaporto</option>
-              <option>Patente di guida</option>
-              <option>Altro</option>
+              <option>Carta d'identità</option>
             </select>
           </div>
           <div class="field">
             <label>Numero documento <span class="req">*</span></label>
             <input type="text" name="doc_numero" required placeholder="Es. AA1234567" style="text-transform:uppercase" />
           </div>
-          <div class="field">
-            <label>Data di rilascio</label>
-            <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_doc_rilascio"><span>gg/mm/aaaa</span><span>📅</span></div>
-              <input type="date" name="doc_rilascio" onchange="updDate(this,'disp_doc_rilascio')" />
-            </div>
-          </div>
-          <div class="field">
-            <label>Data di scadenza <span class="req">*</span></label>
-            <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_doc_scadenza"><span>gg/mm/aaaa</span><span>📅</span></div>
-              <input type="date" name="doc_scadenza" required onchange="updDate(this,'disp_doc_scadenza')" />
-            </div>
-          </div>
-          <div class="field">
-            <label>Rilasciato da (autorità)</label>
-            <input type="text" name="doc_autorita" placeholder="Es. Comune di Milano" />
+          <div class="field cond-hidden" id="wrap_codice_fiscale">
+            <label>Codice fiscale <span class="req">*</span></label>
+            <input type="text" name="codice_fiscale" placeholder="RSSMRA80A01H501U" maxlength="16" style="text-transform:uppercase" />
           </div>
         </div>
 
-        <div class="subsection-title">Permesso di lavoro / soggiorno</div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Tipo permesso</label>
-            <select name="permesso_tipo">
-              <option value="">— Nessuno / Non applicabile —</option>
-              <option>Cittadino UE/AELS</option>
-              <option>Permesso B (soggiorno)</option>
-              <option>Permesso C (dimora)</option>
-              <option>Permesso G (frontaliero)</option>
-              <option>Permesso L (breve durata)</option>
-              <option>Altro</option>
-            </select>
+        <div class="subsection-title">Lavoro in Svizzera</div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>Ha già lavorato in Svizzera? <span class="req">*</span></label>
+          <div class="radio-si-no">
+            <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="Si" /> Sì</label>
+            <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="No" /> No</label>
           </div>
-          <div class="field">
-            <label>Numero permesso</label>
-            <input type="text" name="permesso_numero" placeholder="Es. CH-B-123456" />
-          </div>
-          <div class="field">
-            <label>Data scadenza permesso</label>
-            <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_permesso_scad"><span>gg/mm/aaaa</span><span>📅</span></div>
-              <input type="date" name="permesso_scadenza" onchange="updDate(this,'disp_permesso_scad')" />
+        </div>
+        <div id="wrap_permesso" class="cond-hidden" style="margin-bottom:16px;">
+          <div class="grid-2">
+            <div class="field">
+              <label>Tipo di permesso <span class="req">*</span></label>
+              <select name="permesso_tipo">
+                <option value="">— Seleziona —</option>
+                <option>Notifica</option>
+                <option>Frontaliere G</option>
+                <option>Soggiorno B</option>
+                <option>Breve durata L</option>
+                <option>Dimora C</option>
+                <option>Rifugiato F/S</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Il permesso è ancora valido? <span class="req">*</span></label>
+              <div class="radio-si-no">
+                <label class="radio-opt"><input type="radio" name="permesso_valido" value="Si" /> Sì</label>
+                <label class="radio-opt"><input type="radio" name="permesso_valido" value="No" /> No</label>
+              </div>
             </div>
           </div>
-          <div class="field">
-            <label>Patente di guida</label>
-            <select name="patente">
-              <option value="">— Seleziona —</option>
-              <option>Nessuna</option>
-              <option>Categoria B</option>
-              <option>Categoria B + E</option>
-              <option>Categoria C</option>
-              <option>Categoria C + E</option>
-              <option>Altro</option>
-            </select>
+        </div>
+        <div id="wrap_permesso_date" class="cond-hidden" style="margin-bottom:16px;">
+          <div class="grid-2">
+            <div class="field">
+              <label>Data di emissione <span class="req">*</span></label>
+              <div class="date-wrapper">
+                <div class="date-display placeholder" id="disp_permesso_emissione"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <input type="date" name="permesso_emissione" onchange="updDate(this,'disp_permesso_emissione')" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Data di scadenza <span class="req">*</span></label>
+              <div class="date-wrapper">
+                <div class="date-display placeholder" id="disp_permesso_scadenza"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <input type="date" name="permesso_scadenza" onchange="updDate(this,'disp_permesso_scadenza')" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="wrap_avs" class="cond-hidden" style="margin-bottom:16px;">
+          <div class="grid-2">
+            <div class="field">
+              <label>Numero AVS <span class="req">*</span></label>
+              <input type="text" name="avs" placeholder="756.XXXX.XXXX.XX" />
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection-title">Patenti di guida</div>
+        <div class="field">
+          <label>Patenti <span class="req">*</span> <small style="color:var(--text-muted);font-weight:400">(seleziona tutte quelle possedute, oppure "Nessuna")</small></label>
+          <div class="check-grid" id="patentiGrid">
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="Nessuna" /> Nessuna</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="B" /> B</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="BE" /> BE (con rimorchio)</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="C" /> C</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="CE" /> CE</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="C1" /> C1</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="C1E" /> C1E</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="D" /> D</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="DE" /> DE</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="D1" /> D1</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="D1E" /> D1E</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="M1" /> M1</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="M2" /> M2</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="M3" /> M3</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="M4" /> M4</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="M5" /> M5</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="M6" /> M6</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="M7" /> M7</label>
+            <label class="check-opt"><input type="checkbox" name="patenti[]" value="IPAF" /> IPAF</label>
           </div>
         </div>
       </div>
 
-      <!-- ===== SEZIONE 4: STATO CIVILE E FAMIGLIA ===== -->
-      <div class="form-section" data-section="3">
-        <div class="section-header">
-          <div class="section-icon">👨‍👩‍👧</div>
-          <div><h2>Stato Civile e Famiglia</h2><p>Informazioni su stato civile e familiari</p></div>
-        </div>
-
-        <div class="subsection-title">Stato civile</div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Stato civile <span class="req">*</span></label>
-            <select name="stato_civile" required>
-              <option value="">— Seleziona —</option>
-              <option>Celibe / Nubile</option>
-              <option>Sposato/a</option>
-              <option>Convivente</option>
-              <option>Divorziato/a</option>
-              <option>Vedovo/a</option>
-              <option>Separato/a</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Numero di figli a carico</label>
-            <input type="number" name="figli" min="0" max="20" placeholder="0" />
-          </div>
-        </div>
-
-        <div class="subsection-title">Dati bancari</div>
-        <div class="grid-2">
-          <div class="field full">
-            <label>IBAN <span class="req">*</span></label>
-            <input type="text" name="iban" required placeholder="Es. CH56 0483 5012 3456 7800 9" maxlength="34" style="text-transform:uppercase" />
-          </div>
-          <div class="field">
-            <label>Intestatario conto</label>
-            <input type="text" name="intestatario" placeholder="Se diverso dal tuo nome" />
-          </div>
-          <div class="field">
-            <label>Banca</label>
-            <input type="text" name="banca" placeholder="Es. UBS, Raiffeisen..." />
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== SEZIONE 5: SITUAZIONE LAVORATIVA ===== -->
-      <div class="form-section" data-section="4">
+      <!-- ===== SEZIONE 6: SITUAZIONE LAVORATIVA ===== -->
+      <div class="form-section" data-section="5">
         <div class="section-header">
           <div class="section-icon">💼</div>
-          <div><h2>Situazione Lavorativa</h2><p>Posizione attuale ed esperienze professionali</p></div>
+          <div><h2>Situazione Lavorativa</h2><p>Occupazione attuale e formazione</p></div>
         </div>
-
-        <div class="subsection-title">Posizione presso TPS</div>
         <div class="grid-2">
           <div class="field">
-            <label>Ruolo / Mansione <span class="req">*</span></label>
-            <input type="text" name="ruolo" required placeholder="Es. Operaio specializzato" />
-          </div>
-          <div class="field">
-            <label>Reparto / Settore</label>
-            <input type="text" name="reparto" placeholder="Es. Produzione" />
-          </div>
-          <div class="field">
-            <label>Data di inizio <span class="req">*</span></label>
-            <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_inizio"><span>gg/mm/aaaa</span><span>📅</span></div>
-              <input type="date" name="data_inizio" required onchange="updDate(this,'disp_inizio')" />
+            <label>Attualmente sta lavorando? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="sta_lavorando" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="sta_lavorando" value="No" /> No</label>
             </div>
           </div>
           <div class="field">
-            <label>Tipo contratto</label>
-            <select name="tipo_contratto">
+            <label>È iscritto alla disoccupazione? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="iscritto_disoccupazione" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="iscritto_disoccupazione" value="No" /> No</label>
+            </div>
+          </div>
+          <div class="field full cond-hidden" id="wrap_cassa">
+            <label>Nome e luogo della cassa disoccupazione <span class="req">*</span></label>
+            <input type="text" name="cassa_disoccupazione" placeholder="Es. Cassa disoccupazione OCST, Lugano" />
+          </div>
+          <div class="field">
+            <label>Mestiere imparato <span class="req">*</span></label>
+            <input type="text" name="mestiere" required placeholder="Es. Muratore" />
+          </div>
+          <div class="field">
+            <label>Ultima scuola frequentata <span class="req">*</span></label>
+            <select name="ultima_scuola" required>
               <option value="">— Seleziona —</option>
-              <option>Tempo indeterminato</option>
-              <option>Tempo determinato</option>
+              <option>Media</option>
               <option>Apprendistato</option>
-              <option>Stage / Tirocinio</option>
-              <option>Partita IVA / Collaborazione</option>
+              <option>Istituto tecnico</option>
+              <option>Liceo</option>
+              <option>Università</option>
+              <option>Bachelor</option>
+              <option>Master</option>
             </select>
           </div>
           <div class="field">
-            <label>Percentuale lavorativa</label>
-            <select name="percentuale">
+            <label>Ha già mandato il suo CV? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="cv_mandato" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="cv_mandato" value="No" /> No</label>
+            </div>
+            <div id="info_cv" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">📎 Per favore alleghi il CV nella sezione Allegati, insieme a una foto.</div>
+          </div>
+          <div class="field">
+            <label>Ha già lavorato tramite agenzia? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="lavorato_agenzia" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="lavorato_agenzia" value="No" /> No</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tutte le patenti di guida sono valide? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="patenti_valide" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="patenti_valide" value="No" /> No</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Classe salariale settore edile <small style="color:var(--text-muted);font-weight:400">(se ha lavorato o lavora nel settore edile)</small></label>
+            <select name="classe_salariale">
               <option value="">— Seleziona —</option>
-              <option>100%</option>
-              <option>80%</option>
-              <option>60%</option>
-              <option>50%</option>
-              <option>Altro</option>
+              <option>C</option>
+              <option>B</option>
+              <option>A</option>
+              <option>V</option>
+              <option>Q</option>
             </select>
           </div>
-          <div class="field">
-            <label>Titolo di studio</label>
-            <select name="titolo_studio">
-              <option value="">— Seleziona —</option>
-              <option>Licenza elementare</option>
-              <option>Licenza media</option>
-              <option>Diploma professionale (AFC)</option>
-              <option>Maturità / Liceo</option>
-              <option>Bachelor / Laurea triennale</option>
-              <option>Master / Laurea magistrale</option>
-              <option>Dottorato</option>
-              <option>Altro</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="subsection-title">Datore di lavoro attuale / precedente</div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Nome azienda</label>
-            <input type="text" name="azienda_prec" placeholder="Es. Azienda SpA" />
-          </div>
-          <div class="field">
-            <label>Periodo (da — a)</label>
-            <input type="text" name="periodo_prec" placeholder="Es. 01/2020 — 05/2024" />
-          </div>
-          <div class="field">
-            <label>Ruolo ricoperto</label>
-            <input type="text" name="ruolo_prec" placeholder="Es. Magazziniere" />
-          </div>
-          <div class="field">
-            <label>Motivo cessazione</label>
-            <select name="motivo_cessazione">
-              <option value="">— Seleziona —</option>
-              <option>Fine contratto</option>
-              <option>Dimissioni volontarie</option>
-              <option>Licenziamento</option>
-              <option>Pensionamento</option>
-              <option>Altro</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:8px;">
-          <label>Note aggiuntive</label>
-          <textarea name="note" placeholder="Informazioni aggiuntive, competenze particolari, lingue parlate..."></textarea>
         </div>
       </div>
 
-      <!-- ===== SEZIONE 6: ALLEGATI ===== -->
-      <div class="form-section" data-section="5">
+      <!-- ===== SEZIONE 7: SALUTE ===== -->
+      <div class="form-section" data-section="6">
+        <div class="section-header">
+          <div class="section-icon">❤️</div>
+          <div><h2>Salute</h2><p>Stato di salute generale</p></div>
+        </div>
+        <div class="field">
+          <label>Gode di buona salute? <span class="req">*</span></label>
+          <div class="radio-si-no">
+            <label class="radio-opt"><input type="radio" name="buona_salute" value="Si" /> Sì</label>
+            <label class="radio-opt"><input type="radio" name="buona_salute" value="No" /> No</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SEZIONE 8: SALARIO ===== -->
+      <div class="form-section" data-section="7">
+        <div class="section-header">
+          <div class="section-icon">🏦</div>
+          <div><h2>Salario</h2><p>Coordinate bancarie per il versamento dello stipendio</p></div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Banca di appoggio</label>
+            <input type="text" name="banca" placeholder="Es. UBS, Raiffeisen..." />
+          </div>
+          <div class="field">
+            <label>IBAN</label>
+            <input type="text" name="iban" placeholder="Es. CH56 0483 5012 3456 7800 9" maxlength="34" style="text-transform:uppercase" />
+          </div>
+          <div class="field cond-hidden" id="wrap_conto_proprio">
+            <label>Il conto le appartiene? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="conto_proprio" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="conto_proprio" value="No" /> No</label>
+            </div>
+          </div>
+          <div class="field cond-hidden" id="wrap_conto_intestatario">
+            <label>Intestatario del conto (Nome Cognome) <span class="req">*</span></label>
+            <input type="text" name="conto_intestatario" placeholder="Es. Anna Rossi" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SEZIONE 9: ALLEGATI ===== -->
+      <div class="form-section" data-section="8">
         <div class="section-header">
           <div class="section-icon">📎</div>
           <div><h2>Documenti da Allegare</h2><p>Carica copia dei tuoi documenti</p></div>
@@ -928,9 +1125,9 @@
           </div>
         </div>
 
-        <!-- 3. Permesso di lavoro (obbligatorio se ha permesso) -->
+        <!-- 3. Permesso di lavoro (obbligatorio se il permesso è ancora valido) -->
         <div class="field" style="margin-bottom:18px;" id="slot_permesso_wrap">
-          <label id="label_permesso_doc">Permesso di lavoro <span class="req" id="req_permesso" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se hai un permesso)</small></label>
+          <label id="label_permesso_doc">Permesso di lavoro <span class="req" id="req_permesso" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se il permesso è ancora valido)</small></label>
           <div class="upload-slot" id="slot_permesso" onclick="document.getElementById('input_permesso').click()">
             <input type="file" id="input_permesso" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_permesso','permesso_doc')" />
             <span class="slot-icon">📋</span>
@@ -964,7 +1161,31 @@
           <div id="info_banca" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Hai indicato un IBAN — allega il retro del documento bancario.</div>
         </div>
 
-        <!-- 6. Allegato libero (facoltativo) -->
+        <!-- 6. CV (obbligatorio se non ancora inviato) -->
+        <div class="field" style="margin-bottom:18px;" id="slot_cv_wrap">
+          <label>Curriculum Vitae <span class="req" id="req_cv" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatorio se non l'hai già mandato)</small></label>
+          <div class="upload-slot" id="slot_cv" onclick="document.getElementById('input_cv').click()">
+            <input type="file" id="input_cv" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none" onchange="handleSlotFile(this,'slot_cv','cv_doc')" />
+            <span class="slot-icon">📄</span>
+            <span class="slot-text" id="text_cv">Clicca per caricare (PDF o documento)</span>
+            <button type="button" class="slot-remove" id="rm_cv" style="display:none" onclick="event.stopPropagation();clearSlot('input_cv','slot_cv','text_cv','cv_doc','rm_cv')">✕</button>
+          </div>
+          <div id="info_cv_doc" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Non hai ancora mandato il CV — allegalo qui.</div>
+        </div>
+
+        <!-- 7. Foto (obbligatoria se CV non ancora inviato) -->
+        <div class="field" style="margin-bottom:18px;" id="slot_foto_wrap">
+          <label>Foto <span class="req" id="req_foto" style="display:none">*</span> <small style="color:var(--text-muted);font-weight:400">(obbligatoria insieme al CV)</small></label>
+          <div class="upload-slot" id="slot_foto" onclick="document.getElementById('input_foto').click()">
+            <input type="file" id="input_foto" accept=".jpg,.jpeg,.png" style="display:none" onchange="handleSlotFile(this,'slot_foto','foto_doc')" />
+            <span class="slot-icon">📷</span>
+            <span class="slot-text" id="text_foto">Clicca per caricare una foto</span>
+            <button type="button" class="slot-remove" id="rm_foto" style="display:none" onclick="event.stopPropagation();clearSlot('input_foto','slot_foto','text_foto','foto_doc','rm_foto')">✕</button>
+          </div>
+          <div id="info_foto" style="font-size:0.78rem;color:#e53e3e;margin-top:6px;display:none;">⚠️ Allega anche una foto insieme al CV.</div>
+        </div>
+
+        <!-- 8. Allegato libero (facoltativo) -->
         <div class="field" style="margin-bottom:8px;">
           <label>Altro documento <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
           <div class="upload-slot upload-slot-optional" id="slot_altro" onclick="document.getElementById('input_altro').click()">
@@ -977,8 +1198,8 @@
 
       </div>
 
-      <!-- ===== SEZIONE 7: PRIVACY E FIRMA ===== -->
-      <div class="form-section" data-section="6">
+      <!-- ===== SEZIONE 10: PRIVACY E FIRMA ===== -->
+      <div class="form-section" data-section="9">
         <div class="section-header">
           <div class="section-icon">🔒</div>
           <div><h2>Privacy e Firma</h2><p>Dichiarazioni finali e firma digitale</p></div>
@@ -1018,7 +1239,7 @@
       <!-- NAVIGAZIONE -->
       <div class="nav-buttons">
         <button type="button" class="btn btn-back" id="btnBack" onclick="navigate(-1)" style="display:none">← Indietro</button>
-        <span class="step-counter" id="stepCounter">Passo 1 di 7</span>
+        <span class="step-counter" id="stepCounter">Passo 1 di 10</span>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn btn-next" id="btnNext" onclick="navigate(1)">Avanti →</button>
           <button type="submit" class="btn btn-submit" id="btnSubmit" style="display:none">✅ Invia registrazione</button>
@@ -1379,18 +1600,140 @@
   }
 
   // Colora un singolo campo: rosso se vuoto/non valido, normale se ok.
+  // ─── ELENCHI STATICI (cantoni e nazioni) ────────────────────────
+  const CANTONI = ['Ticino','Argovia','Appenzello Esterno','Appenzello Interno','Basilea Campagna','Basilea Città',
+    'Berna','Friburgo','Ginevra','Giura','Glarona','Grigioni','Lucerna','Neuchâtel','Nidvaldo','Obvaldo',
+    'San Gallo','Sciaffusa','Soletta','Svitto','Turgovia','Uri','Vallese','Vaud','Zugo','Zurigo'];
+
+  const NAZIONI = ['Svizzera','Italia',
+    'Afghanistan','Albania','Algeria','Andorra','Angola','Arabia Saudita','Argentina','Armenia','Australia','Austria','Azerbaigian',
+    'Bahrein','Bangladesh','Belgio','Bielorussia','Bolivia','Bosnia ed Erzegovina','Brasile','Bulgaria','Burkina Faso','Burundi',
+    'Cambogia','Camerun','Canada','Capo Verde','Ciad','Cile','Cina','Cipro','Colombia','Congo','Corea del Sud','Costa d\'Avorio','Costa Rica','Croazia','Cuba',
+    'Danimarca','Ecuador','Egitto','El Salvador','Emirati Arabi Uniti','Eritrea','Estonia','Etiopia',
+    'Filippine','Finlandia','Francia','Gambia','Georgia','Germania','Ghana','Giappone','Gibuti','Giordania','Grecia','Guatemala','Guinea',
+    'Haiti','Honduras','India','Indonesia','Iran','Iraq','Irlanda','Islanda','Israele',
+    'Kazakistan','Kenya','Kosovo','Kuwait','Lettonia','Libano','Liberia','Libia','Liechtenstein','Lituania','Lussemburgo',
+    'Macedonia del Nord','Madagascar','Malesia','Mali','Malta','Marocco','Mauritania','Messico','Moldavia','Monaco','Mongolia','Montenegro','Mozambico',
+    'Nepal','Nicaragua','Niger','Nigeria','Norvegia','Nuova Zelanda','Paesi Bassi','Pakistan','Panama','Paraguay','Perù','Polonia','Portogallo',
+    'Qatar','Regno Unito','Repubblica Ceca','Repubblica Democratica del Congo','Repubblica Dominicana','Romania','Ruanda','Russia',
+    'San Marino','Senegal','Serbia','Sierra Leone','Singapore','Siria','Slovacchia','Slovenia','Somalia','Spagna','Sri Lanka','Stati Uniti','Sudafrica','Sudan','Svezia',
+    'Tagikistan','Taiwan','Tanzania','Thailandia','Togo','Tunisia','Turchia','Turkmenistan',
+    'Ucraina','Uganda','Ungheria','Uruguay','Uzbekistan','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe','Altro'];
+
+  function popolaSelect(name, lista) {
+    document.querySelectorAll(`select[name="${name}"]`).forEach(sel => {
+      lista.forEach(v => { const o = document.createElement('option'); o.textContent = v; sel.appendChild(o); });
+    });
+  }
+
+  // ─── HELPER VALORI CAMPO ────────────────────────────────────────
+  function val(name) {
+    const el = document.querySelector(`#onboardingForm [name="${name}"]:not([type="radio"]):not([type="checkbox"])`);
+    return (el && el.value || '').trim();
+  }
+  function radioVal(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : '';
+  }
+  // Mostra Sì/No in modo leggibile (i valori salvati sono "Si"/"No")
+  function siNo(v) { return v === 'Si' ? 'Sì' : (v || ''); }
+
+  // ─── CAMPI CONDIZIONALI (mostra/nascondi + obbligo) ─────────────
+  // L'ordine conta: i wrapper a cascata (es. permesso → date permesso,
+  // conto_proprio → intestatario) vanno DOPO il loro trigger, così lo
+  // svuotamento si propaga in un solo passaggio.
+  const sposatoOUnione = () => ['Sposato/a','Unione registrata'].includes(val('stato_civile'));
+  const CONDIZIONALI = [
+    { step: 1, wrap: 'wrap_data_stato_civile', campi: ['data_stato_civile'],
+      attivo: () => !['','Celibe/Nubile','Convivente'].includes(val('stato_civile')) },
+    { step: 1, wrap: 'wrap_coniuge',
+      campi: ['coniuge_nome','coniuge_cognome','coniuge_data_nascita','coniuge_avs','coniuge_lavora','coniuge_luogo_lavoro','coniuge_data_inizio_attivita'],
+      attivo: sposatoOUnione },
+    { step: 1, wrap: 'wrap_monoparentale', campi: ['famiglia_monoparentale'],
+      attivo: () => ['Divorziato/a','Separato/a','Convivente'].includes(val('stato_civile')) },
+    { step: 2, wrap: 'wrap_genitori', campi: ['madre_nome','padre_nome'],
+      attivo: () => radioVal('nuovo_permesso') === 'Si' },
+    { step: 4, wrap: 'wrap_nazionalita_estera', campi: ['nazionalita_estera'],
+      attivo: () => val('nazionalita') === 'Estero' },
+    { step: 4, wrap: 'wrap_codice_fiscale', campi: ['codice_fiscale'],
+      attivo: () => val('nazionalita_estera') === 'Italia' },
+    { step: 4, wrap: 'wrap_permesso', campi: ['permesso_tipo','permesso_valido'],
+      attivo: () => radioVal('lavorato_svizzera') === 'Si' },
+    { step: 4, wrap: 'wrap_permesso_date', campi: ['permesso_emissione','permesso_scadenza'],
+      attivo: () => radioVal('lavorato_svizzera') === 'Si' && radioVal('permesso_valido') === 'Si' },
+    { step: 4, wrap: 'wrap_avs', campi: ['avs'],
+      attivo: () => radioVal('lavorato_svizzera') === 'Si' },
+    { step: 5, wrap: 'wrap_cassa', campi: ['cassa_disoccupazione'],
+      attivo: () => radioVal('iscritto_disoccupazione') === 'Si' },
+    { step: 7, wrap: 'wrap_conto_proprio', campi: ['conto_proprio'],
+      attivo: () => val('iban') !== '' },
+    { step: 7, wrap: 'wrap_conto_intestatario', campi: ['conto_intestatario'],
+      attivo: () => val('iban') !== '' && radioVal('conto_proprio') === 'No' }
+  ];
+
+  // Radio Sì/No sempre obbligatori, per sezione
+  const RADIO_OBBLIGATORI = {
+    2: ['nuovo_permesso'],
+    4: ['lavorato_svizzera'],
+    5: ['sta_lavorando','iscritto_disoccupazione','cv_mandato','lavorato_agenzia','patenti_valide'],
+    6: ['buona_salute']
+  };
+
+  function svuotaCampo(name) {
+    document.querySelectorAll(`#onboardingForm [name="${name}"]`).forEach(el => {
+      if (el.type === 'radio' || el.type === 'checkbox') el.checked = false;
+      else if (el.value) {
+        el.value = '';
+        if (el.type === 'date') {
+          const wrap = el.closest('.date-wrapper');
+          const disp = wrap ? wrap.querySelector('.date-display') : null;
+          if (disp) { disp.innerHTML = '<span>gg/mm/aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
+        }
+      }
+      el.style.border = ''; el.style.outline = '';
+    });
+  }
+
+  // Mostra/nasconde i campi condizionali; svuota quelli nascosti.
+  function aggiornaCondizioni() {
+    CONDIZIONALI.forEach(c => {
+      const w = document.getElementById(c.wrap);
+      if (!w) return;
+      const attivo = c.attivo();
+      w.classList.toggle('cond-hidden', !attivo);
+      if (!attivo) c.campi.forEach(svuotaCampo);
+    });
+    // Avviso CV nella sezione Lavorativa
+    const infoCv = document.getElementById('info_cv');
+    if (infoCv) infoCv.style.display = radioVal('cv_mandato') === 'No' ? 'block' : 'none';
+    aggiornaMsgCondizionali();   // aggiorna anche i pallini (richiama aggiornaStatoStep)
+  }
+
+  // Il campo è obbligatorio ADESSO? (statico, condizione attiva o regola telefono/cellulare)
+  function campoRichiestoOra(el) {
+    if (el.required) return true;
+    const n = el.name;
+    if (n === 'telefono')  return val('cellulare') === '';
+    if (n === 'cellulare') return val('telefono') === '';
+    for (const c of CONDIZIONALI) if (c.campi.includes(n)) return c.attivo();
+    return false;
+  }
+
+  function formatoValido(name, v) {
+    if (name === 'avs' || name === 'coniuge_avs') return avsValido(v);
+    if (name === 'iban')  return ibanValido(v);
+    if (name === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    if (name === 'telefono' || name === 'cellulare') return v.replace(/\D/g,'').length >= 8;
+    return true;
+  }
+
   function valutaCampo(el) {
     if (!el) return;
     let ok = true;
-    if (el.type === 'checkbox') ok = el.checked;
+    if (el.type === 'checkbox') ok = el.checked || !el.required;
     else {
       const v = (el.value||'').trim();
-      ok = v !== '';
-      // validazione di formato sui campi noti (solo se compilati)
-      if (ok && el.name === 'avs')      ok = avsValido(v);
-      if (ok && el.name === 'iban')     ok = ibanValido(v);
-      if (ok && el.name === 'email')    ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-      if (ok && el.name === 'telefono') ok = v.replace(/\D/g,'').length >= 8;
+      ok = v === '' ? !campoRichiestoOra(el) : formatoValido(el.name, v);
     }
     el.style.border  = (!ok && el.type !== 'checkbox') ? '1.5px solid #e53e3e' : '';
     el.style.outline = (!ok && el.type === 'checkbox') ? '2px solid #e53e3e' : '';
@@ -1399,11 +1742,44 @@
   // Avvia controllo accesso al caricamento pagina
   window.addEventListener('DOMContentLoaded', () => {
     controllaAccesso();
-    // Listener per messaggi condizionali allegati + ricalcolo stato pallini
-    ['avs','permesso_tipo','iban'].forEach(name => {
-      const el = document.querySelector(`[name="${name}"]`);
-      if (el) { el.addEventListener('input', () => { aggiornaMsgCondizionali(); aggiornaStatoStep(); });
-                el.addEventListener('change', () => { aggiornaMsgCondizionali(); aggiornaStatoStep(); }); }
+
+    // Popola gli elenchi statici (cantoni e nazioni)
+    popolaSelect('cantone', CANTONI);
+    popolaSelect('nazione', NAZIONI);
+    popolaSelect('nazionalita_estera', NAZIONI);
+
+    // Trigger dei campi condizionali (select/testo) → mostra/nascondi + pallini
+    ['stato_civile','nazionalita','nazionalita_estera','iban'].forEach(name => {
+      const el = document.querySelector(`#onboardingForm [name="${name}"]`);
+      if (el) { el.addEventListener('input',  aggiornaCondizioni);
+                el.addEventListener('change', aggiornaCondizioni); }
+    });
+    // Tutti i radio Sì/No: cambiano condizioni, avvisi allegati e pallini
+    document.querySelectorAll('#onboardingForm input[type="radio"]').forEach(r => {
+      r.addEventListener('change', aggiornaCondizioni);
+    });
+    // Il numero AVS condiziona l'allegato Carta AVS
+    const avsEl = document.querySelector('#onboardingForm [name="avs"]');
+    if (avsEl) avsEl.addEventListener('input', aggiornaMsgCondizionali);
+    // Telefono e cellulare si rendono obbligatori a vicenda
+    ['telefono','cellulare'].forEach(name => {
+      const el = document.querySelector(`#onboardingForm [name="${name}"]`);
+      if (el) el.addEventListener('input', aggiornaStatoStep);
+    });
+
+    // Patenti: "Nessuna" esclude le altre e viceversa
+    document.querySelectorAll('input[name="patenti[]"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) {
+          if (cb.value === 'Nessuna') {
+            document.querySelectorAll('input[name="patenti[]"]').forEach(o => { if (o !== cb) o.checked = false; });
+          } else {
+            const nessuna = document.querySelector('input[name="patenti[]"][value="Nessuna"]');
+            if (nessuna) nessuna.checked = false;
+          }
+        }
+        aggiornaStatoStep();
+      });
     });
 
     // Click sui numeri in testata → navigazione libera
@@ -1414,24 +1790,22 @@
       });
     });
 
-    // Feedback immediato sui campi obbligatori: bordo rosso all'uscita (blur), ricalcolo pallini
-    document.querySelectorAll('#onboardingForm [required]').forEach(el => {
-      const evt = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'blur';
+    // Feedback immediato: bordo rosso all'uscita dal campo (anche condizionali), ricalcolo pallini
+    document.querySelectorAll('#onboardingForm input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), #onboardingForm select, #onboardingForm textarea').forEach(el => {
+      const evt = el.tagName === 'SELECT' ? 'change' : 'blur';
       el.addEventListener(evt, () => { valutaCampo(el); aggiornaStatoStep(); });
     });
-    // Validazione di formato anche su campi non-required ma controllati (avs/iban)
-    ['avs','iban'].forEach(name => {
-      const el = document.querySelector(`[name="${name}"]`);
-      if (el) el.addEventListener('blur', () => { valutaCampo(el); aggiornaStatoStep(); });
+    document.querySelectorAll('#onboardingForm input[type="checkbox"][required]').forEach(el => {
+      el.addEventListener('change', () => { valutaCampo(el); aggiornaStatoStep(); });
     });
 
-    // Stato iniziale dei pallini e del pulsante invia
-    aggiornaStatoStep();
+    // Stato iniziale: condizioni nascoste, pallini e pulsante invia
+    aggiornaCondizioni();
   });
   // ============================================================
 
   let currentStep = 0;
-  const totalSteps = 7;
+  const totalSteps = 10;
 
   // DATE
   function formatDateIT(val) {
@@ -1467,8 +1841,8 @@
 
   // VALIDATION
   function validateSection(step) {
-    // Step 5 = allegati: logica dedicata
-    if (step === 5) return validateAllegati();
+    // Step 8 = allegati: logica dedicata
+    if (step === 8) return validateAllegati();
 
     const section  = document.querySelectorAll('.form-section')[step];
     const required = section.querySelectorAll('[required]');
@@ -1498,33 +1872,51 @@
   // Ritorna true se la sezione è completa. SILENZIOSA: non tocca la UI.
   // Considera obbligatori "sempre" + condizionali (allegati) + formato (IBAN/AVS/email/tel).
   function sezioneCompleta(step) {
-    if (step === 5) return allegatiCompleti();   // allegati: logica dedicata silenziosa
+    if (step === 8) return allegatiCompleti();   // allegati: logica dedicata silenziosa
 
     const section  = document.querySelectorAll('.form-section')[step];
     if (!section) return true;
 
-    // 1. campi required compilati
+    // 1. campi required statici compilati
     const required = section.querySelectorAll('[required]');
     for (const el of required) {
       if (el.type === 'checkbox') { if (!el.checked) return false; }
       else if (!el.value.trim())  { return false; }
     }
 
-    // 2. validazione di formato sui campi presenti in questa sezione (se compilati)
-    const campo = (nome) => section.querySelector(`[name="${nome}"]`);
-    const valOf = (nome) => (campo(nome)?.value || '').trim();
-    if (campo('avs')      && valOf('avs')      && !avsValido(valOf('avs')))   return false;
-    if (campo('iban')     && valOf('iban')     && !ibanValido(valOf('iban'))) return false;
-    if (campo('email')    && valOf('email')    && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valOf('email'))) return false;
-    if (campo('telefono') && valOf('telefono') && valOf('telefono').replace(/\D/g,'').length < 8) return false;
+    // 2. radio Sì/No sempre obbligatori della sezione
+    for (const n of (RADIO_OBBLIGATORI[step] || [])) {
+      if (!radioVal(n)) return false;
+    }
 
-    // 3. sezione Privacy (step 6): oltre alle checkbox serve anche la firma
-    if (step === 6 && !hasSigned) return false;
+    // 3. campi condizionali attivi della sezione
+    for (const c of CONDIZIONALI) {
+      if (c.step !== step || !c.attivo()) continue;
+      for (const n of c.campi) {
+        const el = section.querySelector(`[name="${n}"]`);
+        if (!el) continue;
+        if (el.type === 'radio') { if (!radioVal(n)) return false; }
+        else if (!el.value.trim()) return false;
+      }
+    }
+
+    // 4. regole speciali
+    if (step === 0 && !val('telefono') && !val('cellulare')) return false;                       // almeno un recapito
+    if (step === 4 && !section.querySelector('input[name="patenti[]"]:checked')) return false;   // almeno una patente
+
+    // 5. validazione di formato sui campi della sezione (se compilati)
+    for (const n of ['avs','coniuge_avs','iban','email','telefono','cellulare']) {
+      const el = section.querySelector(`[name="${n}"]`);
+      if (el && el.value.trim() && !formatoValido(n, el.value.trim())) return false;
+    }
+
+    // 6. sezione Privacy (step 9): oltre alle checkbox serve anche la firma
+    if (step === 9 && !hasSigned) return false;
 
     return true;
   }
 
-  // Tutte le 7 sezioni complete?
+  // Tutte le 10 sezioni complete?
   function tuttoCompleto() {
     for (let i = 0; i < totalSteps; i++) { if (!sezioneCompleta(i)) return false; }
     return true;
@@ -1576,7 +1968,7 @@
             <option value="">— Seleziona —</option>
             <option>Coniuge / Partner</option><option>Genitore</option>
             <option>Figlio/a</option><option>Fratello/Sorella</option>
-            <option>Amico/a</option><option>Altro</option>
+            <option>Famigliare</option><option>Amico/a</option><option>Altro</option>
           </select></div>
         <div class="field"><label>Telefono</label><input type="tel" name="emg_telefono[]" placeholder="+41 79 123 45 67" /></div>
         <div class="field"><label>Email</label><input type="email" name="emg_email[]" placeholder="opzionale" /></div>
@@ -1664,8 +2056,17 @@
     permesso_doc:{ file: null, slotId: 'slot_permesso',    textId: 'text_permesso',   removeId: 'rm_permesso'   },
     avs_doc:     { file: null, slotId: 'slot_avs',         textId: 'text_avs',        removeId: 'rm_avs'        },
     banca_doc:   { file: null, slotId: 'slot_banca',       textId: 'text_banca',      removeId: 'rm_banca'      },
+    cv_doc:      { file: null, slotId: 'slot_cv',          textId: 'text_cv',         removeId: 'rm_cv'         },
+    foto_doc:    { file: null, slotId: 'slot_foto',        textId: 'text_foto',       removeId: 'rm_foto'       },
     altro_doc:   { file: null, slotId: 'slot_altro',       textId: 'text_altro',      removeId: 'rm_altro'      }
   };
+
+  function testoSlotDefault(key) {
+    if (key === 'altro_doc') return 'Clicca per caricare un documento aggiuntivo';
+    if (key === 'cv_doc')    return 'Clicca per caricare (PDF o documento)';
+    if (key === 'foto_doc')  return 'Clicca per caricare una foto';
+    return 'Clicca per caricare (PDF o immagine)';
+  }
 
   function handleSlotFile(input, slotId, key) {
     const f = input.files[0];
@@ -1690,20 +2091,25 @@
     const txt  = document.getElementById(textId);
     const rm   = document.getElementById(removeId);
     slot.classList.remove('has-file','required-missing');
-    txt.textContent = key === 'altro_doc'
-      ? 'Clicca per caricare un documento aggiuntivo'
-      : 'Clicca per caricare (PDF o immagine)';
+    txt.textContent = testoSlotDefault(key);
     if (rm) rm.style.display = 'none';
     document.getElementById(inputId).value = '';
     aggiornaMsgCondizionali();
   }
 
+  // Condizioni allegati calcolate dai campi del form
+  function condizioniAllegati() {
+    return {
+      haPermesso: radioVal('permesso_valido') === 'Si',
+      haAVS:      val('avs') !== '',
+      haIBAN:     val('iban') !== '',
+      serveCV:    radioVal('cv_mandato') === 'No'
+    };
+  }
+
   // Mostra/nasconde avvisi condizionali in tempo reale
   function aggiornaMsgCondizionali() {
-    const haPermesso = (document.querySelector('[name="permesso_tipo"]')?.value||'').trim() !== '' &&
-                       (document.querySelector('[name="permesso_tipo"]')?.value||'') !== '— Seleziona —';
-    const haAVS      = (document.querySelector('[name="avs"]')?.value||'').trim() !== '';
-    const haIBAN     = (document.querySelector('[name="iban"]')?.value||'').trim() !== '';
+    const { haPermesso, haAVS, haIBAN, serveCV } = condizioniAllegati();
 
     // Permesso
     document.getElementById('req_permesso').style.display      = haPermesso ? 'inline' : 'none';
@@ -1714,62 +2120,50 @@
     // Banca
     document.getElementById('req_banca').style.display         = haIBAN ? 'inline' : 'none';
     document.getElementById('info_banca').style.display        = (haIBAN && !slotFiles.banca_doc.file) ? 'block' : 'none';
+    // CV + Foto
+    document.getElementById('req_cv').style.display            = serveCV ? 'inline' : 'none';
+    document.getElementById('info_cv_doc').style.display       = (serveCV && !slotFiles.cv_doc.file) ? 'block' : 'none';
+    document.getElementById('req_foto').style.display          = serveCV ? 'inline' : 'none';
+    document.getElementById('info_foto').style.display         = (serveCV && !slotFiles.foto_doc.file) ? 'block' : 'none';
 
-    // Ricalcola i pallini in testata (caricamento/rimozione allegati cambia lo stato sez. 5)
+    // Ricalcola i pallini in testata (caricamento/rimozione allegati cambia lo stato sez. 9)
     if (typeof aggiornaStatoStep === 'function') aggiornaStatoStep();
   }
 
   // Versione SILENZIOSA: ritorna solo true/false senza toccare la UI.
   // Usata da sezioneCompleta() per calcolare lo stato dei pallini in testata.
   function allegatiCompleti() {
-    const haPermesso = (document.querySelector('[name="permesso_tipo"]')?.value||'').trim() !== '' &&
-                       (document.querySelector('[name="permesso_tipo"]')?.value||'') !== '— Seleziona —';
-    const haAVS      = (document.querySelector('[name="avs"]')?.value||'').trim() !== '';
-    const haIBAN     = (document.querySelector('[name="iban"]')?.value||'').trim() !== '';
+    const { haPermesso, haAVS, haIBAN, serveCV } = condizioniAllegati();
 
     if (!slotFiles.doc_fronte.file || !slotFiles.doc_retro.file) return false;
     if (haPermesso && !slotFiles.permesso_doc.file) return false;
     if (haAVS      && !slotFiles.avs_doc.file)      return false;
     if (haIBAN     && !slotFiles.banca_doc.file)    return false;
+    if (serveCV    && (!slotFiles.cv_doc.file || !slotFiles.foto_doc.file)) return false;
     return true;
   }
 
-  // Validazione sezione allegati (step 5) — con feedback visivo (bordi rossi + messaggio)
+  // Validazione sezione allegati (step 8) — con feedback visivo (bordi rossi + messaggio)
   function validateAllegati() {
     let valid = true;
     const errEl = document.getElementById('errorMsg');
+    const { haPermesso, haAVS, haIBAN, serveCV } = condizioniAllegati();
 
-    // Sempre obbligatori
-    ['doc_fronte','doc_retro'].forEach(key => {
+    // Slot obbligatori adesso (sempre + condizionali attivi)
+    const obbligatori = {
+      doc_fronte: true, doc_retro: true,
+      permesso_doc: haPermesso, avs_doc: haAVS, banca_doc: haIBAN,
+      cv_doc: serveCV, foto_doc: serveCV
+    };
+    for (const [key, richiesto] of Object.entries(obbligatori)) {
       const slot = document.getElementById(slotFiles[key].slotId);
-      if (!slotFiles[key].file) {
+      if (richiesto && !slotFiles[key].file) {
         slot.classList.add('required-missing');
         valid = false;
       } else {
         slot.classList.remove('required-missing');
       }
-    });
-
-    // Condizionali
-    const haPermesso = (document.querySelector('[name="permesso_tipo"]')?.value||'').trim() !== '' &&
-                       (document.querySelector('[name="permesso_tipo"]')?.value||'') !== '— Seleziona —';
-    const haAVS      = (document.querySelector('[name="avs"]')?.value||'').trim() !== '';
-    const haIBAN     = (document.querySelector('[name="iban"]')?.value||'').trim() !== '';
-
-    if (haPermesso && !slotFiles.permesso_doc.file) {
-      document.getElementById('slot_permesso').classList.add('required-missing');
-      valid = false;
-    } else { document.getElementById('slot_permesso').classList.remove('required-missing'); }
-
-    if (haAVS && !slotFiles.avs_doc.file) {
-      document.getElementById('slot_avs').classList.add('required-missing');
-      valid = false;
-    } else { document.getElementById('slot_avs').classList.remove('required-missing'); }
-
-    if (haIBAN && !slotFiles.banca_doc.file) {
-      document.getElementById('slot_banca').classList.add('required-missing');
-      valid = false;
-    } else { document.getElementById('slot_banca').classList.remove('required-missing'); }
+    }
 
     if (!valid) {
       errEl.textContent = '⚠️ Allega tutti i documenti obbligatori evidenziati in rosso.';
@@ -1789,10 +2183,55 @@
       const txt  = document.getElementById(s.textId);
       const rm   = document.getElementById(s.removeId);
       if (slot) { slot.classList.remove('has-file','required-missing'); }
-      if (txt)  { txt.textContent = key === 'altro_doc' ? 'Clicca per caricare un documento aggiuntivo' : 'Clicca per caricare (PDF o immagine)'; }
+      if (txt)  { txt.textContent = testoSlotDefault(key); }
       if (rm)   { rm.style.display = 'none'; }
     });
     aggiornaMsgCondizionali();
+  }
+
+  // ─── RESET COMPLETO DEL FORM (dopo invio riuscito) ──────────────
+  // Svuota tutti i dati, richiude i campi condizionali e torna al passo 1.
+  function resetFormCompleto() {
+    // 1. Campi HTML: testi, select, radio, checkbox
+    document.getElementById('onboardingForm').reset();
+
+    // 2. Display delle date: form.reset() svuota gli input ma non i riquadri
+    document.querySelectorAll('#onboardingForm input[type="date"]').forEach(el => {
+      const wrap = el.closest('.date-wrapper');
+      const disp = wrap ? wrap.querySelector('.date-display') : null;
+      if (disp) { disp.innerHTML = '<span>gg/mm/aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
+    });
+
+    // 3. Contatti di emergenza: rimuove le righe aggiunte, resta la prima
+    document.querySelectorAll('#emergenzaContainer .repeater-item').forEach((item, i) => {
+      if (i > 0) item.remove();
+    });
+
+    // 4. Firma
+    initCanvas();
+    hasSigned = false;
+    sigPlaceholder.style.display = 'block';
+    sigStatus.textContent = '';
+    canvas.style.borderColor = '';
+
+    // 5. Allegati
+    resetAllegati();
+
+    // 6. Torna al passo 0 (prima sezione)
+    const sections = document.querySelectorAll('.form-section');
+    const steps    = document.querySelectorAll('.step');
+    sections.forEach(s => s.classList.remove('active'));
+    steps.forEach(s => { s.classList.remove('active','done','incompleta'); });
+    sections[0].classList.add('active');
+    steps[0].classList.add('active');
+    currentStep = 0;
+
+    // 7. Bordi rossi: su TUTTI i campi, anche quelli senza required statico
+    document.querySelectorAll('#onboardingForm input, #onboardingForm select, #onboardingForm textarea')
+      .forEach(el => { el.style.border=''; el.style.outline=''; });
+
+    updateNavButtons();
+    aggiornaCondizioni();   // richiude i wrapper condizionali, azzera avvisi allegati e pallini
   }
 
   function fileToBase64(f) {
@@ -1860,6 +2299,20 @@
     } catch(e) { return null; }
   }
 
+  // ─── TESTO PRIVACY INTEGRALE DALL'ETICHETTA DEL FORM ────────────
+  // Estrae il testo completo del consenso (senza il titolo in grassetto)
+  // dall'etichetta della checkbox, così il PDF riporta sempre il testo
+  // realmente accettato dal dipendente.
+  function testoPrivacy(idCheckbox) {
+    const cb = document.getElementById(idCheckbox);
+    const span = cb && cb.parentElement ? cb.parentElement.querySelector('span') : null;
+    if (!span) return '';
+    const clone = span.cloneNode(true);
+    const titolo = clone.querySelector('strong');
+    if (titolo) titolo.remove();
+    return clone.textContent.replace(/\s+/g, ' ').trim();
+  }
+
   // ─── COSTRUISCE IL DOCUMENTO jsPDF (usato sia per download che per base64) ───
   async function buildPDFDoc(data) {
     const { jsPDF } = window.jspdf;
@@ -1900,6 +2353,7 @@
     let y = 40;
 
     function sectionTitle(title) {
+      if (y > 260) { doc.addPage(); y = 20; }
       doc.setFillColor(235,241,250);
       doc.rect(margin, y-4, W-margin*2, 8, 'F');
       doc.setTextColor(...blue);
@@ -1922,64 +2376,109 @@
 
     sectionTitle('Dati Anagrafici');
     row('Nome e Cognome', `${data.nome} ${data.cognome}`);
+    row('Sesso', data.sesso);
     row('Data di nascita', data.data_nascita);
     row('Luogo di nascita', data.luogo_nascita);
-    row('Nazionalità', data.nazionalita);
-    row('Codice Fiscale', data.codice_fiscale);
-    row('N° AVS', data.avs);
-    row('Indirizzo', `${data.indirizzo}, ${data.cap} ${data.citta} (${data.paese})`);
+    row('Indirizzo', [data.indirizzo, data.indirizzo2].filter(Boolean).join(' — '));
+    row('CAP / Città', `${data.cap||''} ${data.citta||''}`);
+    row('Cantone', data.cantone);
+    row('Nazione', data.nazione);
     row('Telefono', data.telefono);
+    row('Cellulare', data.cellulare);
     row('Email', data.email);
     y += 4;
 
-    sectionTitle('Contatto di Emergenza');
-    row('Nome', data.emerg_nome);
-    row('Telefono', data.emerg_telefono);
-    row('Relazione', data.emerg_relazione);
-    y += 4;
-
-    sectionTitle('Permessi e Documenti');
-    row('Documento', `${data.doc_tipo||''} n° ${data.doc_numero||''}`);
-    row('Scadenza documento', data.doc_scadenza);
-    row('Tipo permesso', data.permesso_tipo);
-    row('N° permesso', data.permesso_numero);
-    row('Scad. permesso', data.permesso_scadenza);
-    y += 4;
-
-    sectionTitle('Stato Civile e Dati Bancari');
+    sectionTitle('Famiglia');
     row('Stato civile', data.stato_civile);
-    row('Figli a carico', data.figli);
-    row('IBAN', data.iban);
-    row('Banca', data.banca);
+    row('Data matrimonio/separaz.', data.data_stato_civile);
+    row('Figli a carico', data.figli_carico);
+    row('Famiglia monoparentale', siNo(data.famiglia_monoparentale));
+    if (data.coniuge_nome || data.coniuge_cognome) {
+      row('Coniuge', `${data.coniuge_nome||''} ${data.coniuge_cognome||''}`.trim());
+      row('Nascita coniuge', data.coniuge_data_nascita);
+      row('N° AVS coniuge', data.coniuge_avs);
+      row('Coniuge lavora', siNo(data.coniuge_lavora));
+      row('Luogo lavoro coniuge', data.coniuge_luogo_lavoro);
+      row('Inizio attività coniuge', data.coniuge_data_inizio_attivita);
+    }
     y += 4;
 
-    sectionTitle('Informazioni Lavorative');
-    row('Ruolo', data.ruolo);
-    row('Reparto', data.reparto);
-    row('Data inizio', data.data_inizio);
-    row('Tipo contratto', data.tipo_contratto);
-    row('Percentuale', data.percentuale ? data.percentuale + '%' : '');
-    row('Titolo di studio', data.titolo_studio);
-    row('Datore precedente', data.azienda_prec);
+    sectionTitle('Genitori');
+    row('Nuovo permesso di lavoro', siNo(data.nuovo_permesso));
+    row('Madre', data.madre_nome);
+    row('Padre', data.padre_nome);
+    y += 4;
+
+    sectionTitle('Contatti di Emergenza');
+    (data.emergenze || []).forEach(c => {
+      row('Contatto', `${c.nome} (${c.relazione||'—'}) — ${c.telefono}${c.email ? ' — ' + c.email : ''}`);
+    });
+    y += 4;
+
+    sectionTitle('Documenti');
+    row('Nazionalità', data.nazionalita === 'Estero' ? `Estero (${data.nazionalita_estera||'—'})` : data.nazionalita);
+    row('Documento', `${data.doc_tipo||''} n° ${data.doc_numero||''}`);
+    row('Codice fiscale', data.codice_fiscale);
+    row('Già lavorato in Svizzera', siNo(data.lavorato_svizzera));
+    row('Tipo permesso', data.permesso_tipo);
+    row('Permesso ancora valido', siNo(data.permesso_valido));
+    row('Emissione permesso', data.permesso_emissione);
+    row('Scadenza permesso', data.permesso_scadenza);
+    row('N° AVS', data.avs);
+    row('Patenti', data.patenti);
+    y += 4;
+
+    sectionTitle('Situazione Lavorativa');
+    row('Attualmente lavora', siNo(data.sta_lavorando));
+    row('Iscritto disoccupazione', siNo(data.iscritto_disoccupazione));
+    row('Cassa disoccupazione', data.cassa_disoccupazione);
+    row('Mestiere imparato', data.mestiere);
+    row('Ultima scuola', data.ultima_scuola);
+    row('CV già inviato', siNo(data.cv_mandato));
+    row('Lavorato tramite agenzia', siNo(data.lavorato_agenzia));
+    row('Patenti di guida valide', siNo(data.patenti_valide));
+    row('Classe salariale edile', data.classe_salariale);
+    y += 4;
+
+    sectionTitle('Salute');
+    row('Gode di buona salute', siNo(data.buona_salute));
+    y += 4;
+
+    sectionTitle('Salario');
+    row('Banca di appoggio', data.banca);
+    row('IBAN', data.iban);
+    row('Il conto le appartiene', siNo(data.conto_proprio));
+    row('Intestatario conto', data.conto_intestatario);
     y += 4;
 
     // Privacy
     if (y > 200) { doc.addPage(); y = 20; }
     sectionTitle('Dichiarazioni e Consensi');
 
-    const privacyTesto1 = 'Acconsento che TPS registri, elabori o trasmetta i miei dati personali, compresi i dati sensibili ai sensi dell\'art. 5 lett. c LPD del 25 settembre 2020 (RS. 235.1) comunicati in relazione alla candidatura per la locazione di servizi e/o il collocamento di personale o per qualsiasi altro rapporto contrattuale. Acconsento che i dati siano trasmessi a terzi in Svizzera o all\'estero, inclusi paesi senza livello adeguato di protezione dei dati (cfr. Allegato 1), ai sensi dell\'art. 17 al. 1 lett. a LPD.';
-    const privacyTesto2 = 'Con la firma del presente modulo autorizzo TPS a consultare e ad ottenere informazioni presso la competente CPC e precedenti datori di lavoro riguardanti le mie attività professionali passate e in particolare la mia classe salariale nei vari settori.';
+    // Testi integrali letti dalle etichette del form: il PDF riporta sempre
+    // esattamente ciò che il dipendente ha accettato, senza copie da tenere allineate.
+    const privacyTesto1 = testoPrivacy('privacy_gdpr');
+    const privacyTesto2 = testoPrivacy('privacy_cpc');
 
     function privacyRow(num, testo) {
-      if (y > 260) { doc.addPage(); y = 20; }
+      if (y > 255) { doc.addPage(); y = 20; }
       doc.setFontSize(7.5); doc.setFont(undefined,'bold');
       doc.setTextColor(...blue);
       doc.text(`${num}.`, margin, y);
       doc.setFont(undefined,'normal');
       doc.setTextColor(50,50,50);
       const lines = doc.splitTextToSize(testo, W - margin*2 - 6);
-      doc.text(lines, margin + 6, y);
-      y += lines.length * 4 + 4;
+      // stampa riga per riga con cambio pagina: i testi lunghi non devono
+      // sforare nel piè di pagina (che inizia a y=287)
+      for (const line of lines) {
+        if (y > 280) {
+          doc.addPage(); y = 20;
+          doc.setFontSize(7.5); doc.setFont(undefined,'normal'); doc.setTextColor(50,50,50);
+        }
+        doc.text(line, margin + 6, y);
+        y += 4;
+      }
+      y += 4;
     }
 
     doc.setFontSize(7.5); doc.setFont(undefined,'bold');
@@ -2098,49 +2597,81 @@
       <div class="modal-section">
         <h4>Dati Anagrafici</h4>
         ${r('Nome e Cognome', `${data.nome||''} ${data.cognome||''}`)}
+        ${r('Sesso', data.sesso)}
         ${r('Data di nascita', data.data_nascita)}
         ${r('Luogo di nascita', data.luogo_nascita)}
-        ${r('Nazionalità', data.nazionalita)}
-        ${r('Codice Fiscale', data.codice_fiscale)}
-        ${r('N° AVS', data.avs)}
-        ${r('Indirizzo', [data.indirizzo, data.cap, data.citta, data.paese].filter(Boolean).join(', '))}
+        ${r('Indirizzo', [data.indirizzo, data.indirizzo2, data.cap, data.citta].filter(Boolean).join(', '))}
+        ${r('Cantone', data.cantone)}
+        ${r('Nazione', data.nazione)}
         ${r('Telefono', data.telefono)}
+        ${r('Cellulare', data.cellulare)}
         ${r('Email', data.email)}
       </div>
 
       <div class="modal-section">
-        <h4>Contatto di Emergenza</h4>
-        ${r('Nome', data.emerg_nome)}
-        ${r('Telefono', data.emerg_telefono)}
-        ${r('Relazione', data.emerg_relazione)}
-      </div>
-
-      <div class="modal-section">
-        <h4>Documenti e Permessi</h4>
-        ${r('Documento', `${data.doc_tipo||''} n° ${data.doc_numero||''}`)}
-        ${r('Scadenza documento', data.doc_scadenza)}
-        ${r('Tipo permesso', data.permesso_tipo)}
-        ${r('N° permesso', data.permesso_numero)}
-        ${r('Scad. permesso', data.permesso_scadenza)}
-      </div>
-
-      <div class="modal-section">
-        <h4>Stato Civile e Banca</h4>
+        <h4>Famiglia</h4>
         ${r('Stato civile', data.stato_civile)}
-        ${r('Figli a carico', data.figli)}
-        ${r('IBAN', data.iban)}
-        ${r('Banca', data.banca)}
+        ${r('Data matrimonio/separazione', data.data_stato_civile)}
+        ${r('Figli a carico', data.figli_carico)}
+        ${r('Famiglia monoparentale', siNo(data.famiglia_monoparentale))}
+        ${r('Coniuge', [data.coniuge_nome, data.coniuge_cognome].filter(Boolean).join(' '))}
+        ${r('Nascita coniuge', data.coniuge_data_nascita)}
+        ${r('N° AVS coniuge', data.coniuge_avs)}
+        ${r('Coniuge lavora', siNo(data.coniuge_lavora))}
+        ${r('Luogo lavoro coniuge', data.coniuge_luogo_lavoro)}
+        ${r('Inizio attività coniuge', data.coniuge_data_inizio_attivita)}
       </div>
 
       <div class="modal-section">
-        <h4>Informazioni Lavorative</h4>
-        ${r('Ruolo', data.ruolo)}
-        ${r('Reparto', data.reparto)}
-        ${r('Data inizio', data.data_inizio)}
-        ${r('Tipo contratto', data.tipo_contratto)}
-        ${r('Percentuale', data.percentuale ? data.percentuale + '%' : '')}
-        ${r('Titolo di studio', data.titolo_studio)}
-        ${r('Datore precedente', data.azienda_prec)}
+        <h4>Genitori</h4>
+        ${r('Nuovo permesso di lavoro', siNo(data.nuovo_permesso))}
+        ${r('Madre', data.madre_nome)}
+        ${r('Padre', data.padre_nome)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Contatti di Emergenza</h4>
+        ${(data.emergenze||[]).map(c => r(c.nome, `${c.relazione||''} — ${c.telefono||''}`)).join('')}
+      </div>
+
+      <div class="modal-section">
+        <h4>Documenti</h4>
+        ${r('Nazionalità', data.nazionalita === 'Estero' ? `Estero (${data.nazionalita_estera||''})` : data.nazionalita)}
+        ${r('Documento', `${data.doc_tipo||''} n° ${data.doc_numero||''}`)}
+        ${r('Codice fiscale', data.codice_fiscale)}
+        ${r('Già lavorato in Svizzera', siNo(data.lavorato_svizzera))}
+        ${r('Tipo permesso', data.permesso_tipo)}
+        ${r('Permesso ancora valido', siNo(data.permesso_valido))}
+        ${r('Emissione permesso', data.permesso_emissione)}
+        ${r('Scadenza permesso', data.permesso_scadenza)}
+        ${r('N° AVS', data.avs)}
+        ${r('Patenti', data.patenti)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Situazione Lavorativa</h4>
+        ${r('Attualmente lavora', siNo(data.sta_lavorando))}
+        ${r('Iscritto disoccupazione', siNo(data.iscritto_disoccupazione))}
+        ${r('Cassa disoccupazione', data.cassa_disoccupazione)}
+        ${r('Mestiere imparato', data.mestiere)}
+        ${r('Ultima scuola', data.ultima_scuola)}
+        ${r('CV già inviato', siNo(data.cv_mandato))}
+        ${r('Lavorato tramite agenzia', siNo(data.lavorato_agenzia))}
+        ${r('Patenti di guida valide', siNo(data.patenti_valide))}
+        ${r('Classe salariale edile', data.classe_salariale)}
+      </div>
+
+      <div class="modal-section">
+        <h4>Salute</h4>
+        ${r('Gode di buona salute', siNo(data.buona_salute))}
+      </div>
+
+      <div class="modal-section">
+        <h4>Salario</h4>
+        ${r('Banca di appoggio', data.banca)}
+        ${r('IBAN', data.iban)}
+        ${r('Il conto le appartiene', siNo(data.conto_proprio))}
+        ${r('Intestatario conto', data.conto_intestatario)}
       </div>
 
       <div class="modal-section">
@@ -2182,34 +2713,15 @@
       // ── RESET E RITORNO AL PASSO 1 ──────────────────────────────
       formSubmitted = true;
 
-      // Salva dati per PDF prima di resettare
+      // Salva dati per PDF prima di resettare. Gli allegati e il PDF base64
+      // non servono alla rigenerazione: toglierli evita di lasciare MB di
+      // documenti sensibili nell'attributo onclick del banner.
       const dataPDF = JSON.parse(JSON.stringify(data));
+      delete dataPDF.allegati;
+      delete dataPDF.pdf_base64;
+      delete dataPDF.token;
 
-      // 1. Reset form HTML
-      document.getElementById('onboardingForm').reset();
-
-      // 2. Reset firma
-      initCanvas();
-      hasSigned = false;
-      sigPlaceholder.style.display = 'block';
-      sigStatus.textContent = '';
-      canvas.style.borderColor = '';
-
-      // 3. Reset allegati
-      resetAllegati();
-
-      // 4. Torna al passo 0 (prima sezione)
-      const sections = document.querySelectorAll('.form-section');
-      const steps    = document.querySelectorAll('.step');
-      sections.forEach(s => s.classList.remove('active'));
-      steps.forEach(s => { s.classList.remove('active','done','incompleta'); });
-      sections[0].classList.add('active');
-      steps[0].classList.add('active');
-      currentStep = 0;
-      // pulisci i bordi rossi rimasti sui campi
-      document.querySelectorAll('#onboardingForm [required]').forEach(el => { el.style.border=''; el.style.outline=''; });
-      updateNavButtons();
-      aggiornaStatoStep();
+      resetFormCompleto();
 
       // 5. Nascondi messaggi precedenti e mostra il banner di successo in cima
       successMsg.style.display = 'none';
@@ -2293,6 +2805,10 @@
     if (d.avs && d.avs.trim() && !avsValido(d.avs)) {
       return '⚠️ Il numero AVS non è valido. Formato atteso: 756.XXXX.XXXX.XX';
     }
+    // AVS coniuge: stesso controllo
+    if (d.coniuge_avs && d.coniuge_avs.trim() && !avsValido(d.coniuge_avs)) {
+      return '⚠️ Il numero AVS del coniuge non è valido. Formato atteso: 756.XXXX.XXXX.XX';
+    }
     // Data di nascita: non nel futuro, non oltre 120 anni fa
     if (d.data_nascita) {
       const nasc = new Date(d.data_nascita);
@@ -2309,6 +2825,10 @@
     if (d.telefono && d.telefono.replace(/\D/g,'').length < 8) {
       return '⚠️ Il numero di telefono non sembra valido (troppo corto).';
     }
+    // Cellulare: stesso controllo
+    if (d.cellulare && d.cellulare.replace(/\D/g,'').length < 8) {
+      return '⚠️ Il numero di cellulare non sembra valido (troppo corto).';
+    }
     return null;
   }
 
@@ -2318,7 +2838,7 @@
 
     if (formSubmitted) return; // già inviato, ignora
 
-    if (!validateSection(6)) return;
+    if (!validateSection(9)) return;
     if (!document.getElementById('privacy_gdpr').checked) {
       document.getElementById('privacy_gdpr').style.outline = '2px solid #e53e3e';
       errorMsg.textContent = '⚠️ Devi accettare il consenso al trattamento dei dati (punto 1).';
@@ -2344,13 +2864,22 @@
     const form = e.target;
     const data = {};
     new FormData(form).forEach((v,k) => {
-      if (k === 'file') return;
-      if (typeof v === 'string') {
-        const maxLen = (k === 'note') ? 2000 : 200;   // "note" più lungo, gli altri brevi
-        v = v.trim().slice(0, maxLen);
-      }
+      if (k === 'file' || k.endsWith('[]')) return;   // i campi ripetuti sono gestiti a parte
+      if (typeof v === 'string') v = v.trim().slice(0, 200);
       data[k] = v;
     });
+
+    // Contatti di emergenza (repeater) → array di oggetti
+    const emgNomi = [...form.querySelectorAll('[name="emg_nome[]"]')].map(el => el.value.trim().slice(0, 200));
+    const emgRel  = [...form.querySelectorAll('[name="emg_relazione[]"]')].map(el => el.value);
+    const emgTel  = [...form.querySelectorAll('[name="emg_telefono[]"]')].map(el => el.value.trim().slice(0, 200));
+    const emgEm   = [...form.querySelectorAll('[name="emg_email[]"]')].map(el => el.value.trim().slice(0, 200));
+    data.emergenze = emgNomi
+      .map((n, i) => ({ nome: n, relazione: emgRel[i] || '', telefono: emgTel[i] || '', email: emgEm[i] || '' }))
+      .filter(c => c.nome || c.telefono);
+
+    // Patenti selezionate → stringa "B, C, CE"
+    data.patenti = [...form.querySelectorAll('input[name="patenti[]"]:checked')].map(c => c.value).join(', ');
 
     // Validazioni dati (IBAN, AVS, data nascita, email, telefono)
     // Eseguite ORA che le date sono ancora in formato ISO (yyyy-mm-dd)
@@ -2364,7 +2893,8 @@
     }
 
     // Date formattate
-    ['data_nascita','doc_rilascio','doc_scadenza','permesso_scadenza','data_inizio'].forEach(f => {
+    ['data_nascita','data_stato_civile','coniuge_data_nascita','coniuge_data_inizio_attivita',
+     'permesso_emissione','permesso_scadenza'].forEach(f => {
       if (data[f]) data[f] = formatDateIT(data[f]);
     });
 
@@ -2385,6 +2915,8 @@
       permesso_doc: 'Permesso_lavoro',
       avs_doc:      'Carta_AVS',
       banca_doc:    'Documento_bancario',
+      cv_doc:       'CV',
+      foto_doc:     'Foto',
       altro_doc:    'Altro'
     };
     const allegatiArr = [];
