@@ -1597,6 +1597,57 @@
     document.getElementById('formContainer').style.display = 'none';
   }
 
+  // ── Banner verde temporaneo (usato dopo invio dello STAFF) ──────
+  function mostraBannerSuccesso(dataPDF) {
+    const banner = document.createElement('div');
+    banner.style.cssText = `
+      position:fixed; top:0; left:0; right:0; z-index:2000;
+      background:#1a7a3f; color:white; text-align:center;
+      padding:18px 24px; font-size:1rem; font-weight:600;
+      box-shadow:0 4px 20px rgba(0,0,0,0.25);
+    `;
+    banner.innerHTML = `
+      ✅ Registrazione di <strong>${dataPDF.nome} ${dataPDF.cognome}</strong> inviata con successo!
+      &nbsp;&nbsp;
+      <button onclick="generatePDF(${JSON.stringify(dataPDF).replace(/</g,'\\u003c')})"
+        style="background:white;color:#1a7a3f;border:none;border-radius:6px;padding:6px 14px;font-weight:700;cursor:pointer;margin-left:8px;">
+        📄 Scarica PDF
+      </button>
+      <button onclick="this.parentElement.remove()"
+        style="background:transparent;color:white;border:1px solid rgba(255,255,255,0.5);border-radius:6px;padding:6px 12px;cursor:pointer;margin-left:8px;font-size:0.85rem;">
+        ✕ Chiudi
+      </button>
+    `;
+    document.body.prepend(banner);
+    setTimeout(() => { if (banner.parentElement) banner.remove(); }, 30000);
+  }
+
+  // ── Schermata di chiusura (usata dopo invio via LINK TEMPORANEO) ─
+  // L'accesso è terminato: niente più form, niente nuovo invio.
+  function mostraSchermataChiusura(dataPDF) {
+    const box = document.getElementById('accessoBox');
+    box.innerHTML = `
+      <div style="background:white;border-radius:14px;padding:44px 32px;text-align:center;max-width:480px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <div style="font-size:3rem;margin-bottom:14px;">✅</div>
+        <h2 style="color:var(--blue);font-size:1.2rem;margin-bottom:12px;">Registrazione inviata!</h2>
+        <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;">
+          Grazie <strong>${dataPDF.nome} ${dataPDF.cognome}</strong>, la tua registrazione è stata inviata correttamente all'ufficio HR.
+          <br><br>Questo link è personale e ora è stato disattivato: non è più possibile inviare un altro modulo.
+        </p>
+        <div style="margin-top:22px;">
+          <button onclick="generatePDF(${JSON.stringify(dataPDF).replace(/</g,'\\u003c')})"
+            style="background:var(--blue);color:white;border:none;border-radius:8px;padding:11px 22px;font-weight:700;cursor:pointer;font-size:0.9rem;">
+            📄 Scarica una copia PDF
+          </button>
+        </div>
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0;">
+          <p style="font-size:0.78rem;color:var(--text-muted);">Team Personnel Solutions<br>📧 info@tps-sa.ch</p>
+        </div>
+      </div>`;
+    box.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   // Colora un singolo campo: rosso se vuoto/non valido, normale se ok.
   // ─── ELENCHI STATICI (cantoni e nazioni) ────────────────────────
   const CANTONI = ['Ticino','Argovia','Appenzello Esterno','Appenzello Interno','Basilea Campagna','Basilea Città',
@@ -2702,8 +2753,13 @@
       });
       if (!res.ok) throw new Error(res.status);
 
-      // ── RESET E RITORNO AL PASSO 1 ──────────────────────────────
+      // ── INVIO RIUSCITO ──────────────────────────────────────────
       formSubmitted = true;
+
+      // Era un accesso via link personale (token) o un invio dello staff?
+      // Lo decidiamo PRIMA del reset, perché resetFormCompleto non tocca
+      // tokenCorrente ma è più chiaro fissarlo qui.
+      const accessoConToken = !!tokenCorrente;
 
       // Salva dati per PDF prima di resettare. Gli allegati e il PDF base64
       // non servono alla rigenerazione: toglierli evita di lasciare MB di
@@ -2713,39 +2769,26 @@
       delete dataPDF.pdf_base64;
       delete dataPDF.token;
 
+      // Svuota sempre il form (così non restano dati sensibili in pagina)
       resetFormCompleto();
-
-      // 5. Nascondi messaggi precedenti e mostra il banner di successo in cima
       successMsg.style.display = 'none';
       errorMsg.style.display   = 'none';
 
-      // Mostra banner verde temporaneo in cima alla pagina
-      const banner = document.createElement('div');
-      banner.style.cssText = `
-        position:fixed; top:0; left:0; right:0; z-index:2000;
-        background:#1a7a3f; color:white; text-align:center;
-        padding:18px 24px; font-size:1rem; font-weight:600;
-        box-shadow:0 4px 20px rgba(0,0,0,0.25);
-      `;
-      banner.innerHTML = `
-        ✅ Registrazione di <strong>${dataPDF.nome} ${dataPDF.cognome}</strong> inviata con successo!
-        &nbsp;&nbsp;
-        <button onclick="generatePDF(${JSON.stringify(dataPDF).replace(/</g,'\\u003c')})"
-          style="background:white;color:#1a7a3f;border:none;border-radius:6px;padding:6px 14px;font-weight:700;cursor:pointer;margin-left:8px;">
-          📄 Scarica PDF
-        </button>
-        <button onclick="this.parentElement.remove()"
-          style="background:transparent;color:white;border:1px solid rgba(255,255,255,0.5);border-radius:6px;padding:6px 12px;cursor:pointer;margin-left:8px;font-size:0.85rem;">
-          ✕ Chiudi
-        </button>
-      `;
-      document.body.prepend(banner);
-      // Auto-rimuovi dopo 30 secondi
-      setTimeout(() => { if (banner.parentElement) banner.remove(); }, 30000);
+      if (accessoConToken) {
+        // ── LINK TEMPORANEO: chiudi l'accesso ───────────────────────
+        // Il token è già stato marcato come usato dal flusso. Nascondiamo
+        // il form e mostriamo una schermata di chiusura: niente nuovo invio.
+        tokenCorrente = null;
+        hideForm();
+        mostraSchermataChiusura(dataPDF);
+      } else {
+        // ── STAFF: torna al menu (compila / invia link) ─────────────
+        mostraBannerSuccesso(dataPDF);
+        mostraMenuStaff();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
 
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // Riabilita invio per un eventuale nuovo dipendente
+      // Riabilita l'invio per un'eventuale nuova compilazione (rilevante solo per lo staff)
       formSubmitted = false;
       pendingData   = null;
       submitBtn.disabled = false;
