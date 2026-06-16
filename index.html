@@ -898,12 +898,14 @@
           </div>
         </div>
 
-        <div class="subsection-title">Lavoro in Svizzera</div>
-        <div class="field" style="margin-bottom:16px;">
-          <label>Ha già lavorato in Svizzera? <span class="req">*</span></label>
-          <div class="radio-si-no">
-            <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="Si" /> Sì</label>
-            <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="No" /> No</label>
+        <div id="wrap_lavoro_svizzera" class="cond-hidden">
+          <div class="subsection-title">Lavoro in Svizzera</div>
+          <div class="field" style="margin-bottom:16px;">
+            <label>Ha già lavorato in Svizzera? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="No" /> No</label>
+            </div>
           </div>
         </div>
         <div id="wrap_permesso" class="cond-hidden" style="margin-bottom:16px;">
@@ -914,6 +916,7 @@
                 <option value="">— Seleziona —</option>
                 <option>Notifica</option>
                 <option>Frontaliere G</option>
+                <option>Permesso G con rientro settimanale</option>
                 <option>Soggiorno B</option>
                 <option>Breve durata L</option>
                 <option>Dimora C</option>
@@ -926,6 +929,27 @@
                 <label class="radio-opt"><input type="radio" name="permesso_valido" value="Si" /> Sì</label>
                 <label class="radio-opt"><input type="radio" name="permesso_valido" value="No" /> No</label>
               </div>
+            </div>
+          </div>
+        </div>
+        <div id="wrap_residenza_settimanale" class="cond-hidden" style="margin-bottom:16px;">
+          <div class="subsection-title">Indirizzo di residenza settimanale</div>
+          <div class="grid-2">
+            <div class="field full">
+              <label>Indirizzo <span class="req">*</span></label>
+              <input type="text" name="res_sett_indirizzo" placeholder="Via/Strada, numero civico" />
+            </div>
+            <div class="field full">
+              <label>Indirizzo 2 <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+              <input type="text" name="res_sett_indirizzo2" placeholder="Complemento di indirizzo" />
+            </div>
+            <div class="field">
+              <label>CAP / NPA <span class="req">*</span></label>
+              <input type="text" name="res_sett_cap" inputmode="numeric" placeholder="Es. 6900" />
+            </div>
+            <div class="field">
+              <label>Luogo <span class="req">*</span></label>
+              <input type="text" name="res_sett_luogo" placeholder="Es. Lugano" />
             </div>
           </div>
         </div>
@@ -1707,6 +1731,13 @@
   // Mostra Sì/No in modo leggibile (i valori salvati sono "Si"/"No")
   function siNo(v) { return v === 'Si' ? 'Sì' : (v || ''); }
 
+  // Compone l'indirizzo di residenza settimanale in una riga leggibile
+  function residenzaSettimanaleTesto(d) {
+    const via = [d.res_sett_indirizzo, d.res_sett_indirizzo2].filter(Boolean).join(', ');
+    const loc = [d.res_sett_cap, d.res_sett_luogo].filter(Boolean).join(' ');
+    return [via, loc].filter(Boolean).join(' — ');
+  }
+
   // ─── CAMPI CONDIZIONALI (mostra/nascondi + obbligo) ─────────────
   // L'ordine conta: i wrapper a cascata (es. permesso → date permesso,
   // conto_proprio → intestatario) vanno DOPO il loro trigger, così lo
@@ -1726,12 +1757,19 @@
       attivo: () => val('nazionalita') === 'Estero' },
     { step: 4, wrap: 'wrap_codice_fiscale', campi: ['codice_fiscale'],
       attivo: () => val('nazionalita_estera') === 'Italia' },
+    // Domanda "lavorato in Svizzera" e permessi: solo per nazionalità estera.
+    { step: 4, wrap: 'wrap_lavoro_svizzera', campi: ['lavorato_svizzera'],
+      attivo: () => val('nazionalita') === 'Estero' },
     { step: 4, wrap: 'wrap_permesso', campi: ['permesso_tipo','permesso_valido'],
       attivo: () => radioVal('lavorato_svizzera') === 'Si' },
+    { step: 4, wrap: 'wrap_residenza_settimanale', campi: ['res_sett_indirizzo','res_sett_cap','res_sett_luogo'],
+      svuotaAnche: ['res_sett_indirizzo2'],
+      attivo: () => radioVal('lavorato_svizzera') === 'Si' && val('permesso_tipo') === 'Permesso G con rientro settimanale' },
     { step: 4, wrap: 'wrap_permesso_date', campi: ['permesso_emissione','permesso_scadenza'],
       attivo: () => radioVal('lavorato_svizzera') === 'Si' && radioVal('permesso_valido') === 'Si' },
+    // AVS obbligatorio se cittadino svizzero oppure se ha già lavorato in Svizzera.
     { step: 4, wrap: 'wrap_avs', campi: ['avs'],
-      attivo: () => radioVal('lavorato_svizzera') === 'Si' },
+      attivo: () => val('nazionalita') === 'Svizzera' || radioVal('lavorato_svizzera') === 'Si' },
     { step: 5, wrap: 'wrap_cassa', campi: ['cassa_disoccupazione'],
       attivo: () => radioVal('iscritto_disoccupazione') === 'Si' },
     { step: 7, wrap: 'wrap_conto_proprio', campi: ['conto_proprio'],
@@ -1743,7 +1781,7 @@
   // Radio Sì/No sempre obbligatori, per sezione
   const RADIO_OBBLIGATORI = {
     2: ['nuovo_permesso'],
-    4: ['lavorato_svizzera'],
+    // lavorato_svizzera è obbligatorio solo per nazionalità estera → gestito in CONDIZIONALI
     5: ['sta_lavorando','iscritto_disoccupazione','cv_mandato','lavorato_agenzia','patenti_valide'],
     6: ['limitazioni_salute','idoneita_mansioni']
   };
@@ -1770,7 +1808,10 @@
       if (!w) return;
       const attivo = c.attivo();
       w.classList.toggle('cond-hidden', !attivo);
-      if (!attivo) c.campi.forEach(svuotaCampo);
+      if (!attivo) {
+        c.campi.forEach(svuotaCampo);
+        (c.svuotaAnche || []).forEach(svuotaCampo);   // facoltativi: azzerati ma non obbligatori
+      }
     });
     // Avviso CV nella sezione Lavorativa
     const infoCv = document.getElementById('info_cv');
@@ -2511,6 +2552,7 @@
     row('Codice fiscale', data.codice_fiscale);
     row('Già lavorato in Svizzera', siNo(data.lavorato_svizzera));
     row('Tipo permesso', data.permesso_tipo);
+    if (data.res_sett_indirizzo) row('Residenza settimanale', residenzaSettimanaleTesto(data));
     row('Permesso ancora valido', siNo(data.permesso_valido));
     row('Emissione permesso', data.permesso_emissione);
     row('Scadenza permesso', data.permesso_scadenza);
@@ -2734,6 +2776,7 @@
         ${r('Codice fiscale', data.codice_fiscale)}
         ${r('Già lavorato in Svizzera', siNo(data.lavorato_svizzera))}
         ${r('Tipo permesso', data.permesso_tipo)}
+        ${data.res_sett_indirizzo ? r('Residenza settimanale', residenzaSettimanaleTesto(data)) : ''}
         ${r('Permesso ancora valido', siNo(data.permesso_valido))}
         ${r('Emissione permesso', data.permesso_emissione)}
         ${r('Scadenza permesso', data.permesso_scadenza)}
