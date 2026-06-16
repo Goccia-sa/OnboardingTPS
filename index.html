@@ -503,7 +503,7 @@
 <div id="staffMenu" style="display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px; background:#f4f6f9;">
   <div style="background:white;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.10);width:100%;max-width:480px;overflow:hidden;">
     <div style="background:white;padding:24px 28px;display:flex;align-items:center;gap:14px;border-bottom:2px solid #e2e8f0;">
-      <img src="https://goccia-sa.github.io/OnboardingTPS/logo.png" alt="TPS" style="height:44px;" onerror="this.style.display='none'">
+      <img src="logo.png" alt="TPS" style="height:44px;" onerror="this.style.display='none'">
       <div style="color:#1a3a6b;">
         <div style="font-size:1rem;font-weight:700;">Team Personnel Solutions</div>
         <div style="font-size:0.78rem;color:#718096;margin-top:2px;">Portale interno onboarding</div>
@@ -577,7 +577,7 @@
 
   <!-- HEADER -->
   <div class="header-card">
-    <img src="https://goccia-sa.github.io/OnboardingTPS/logo.png" alt="Team Personnel Solutions"
+    <img src="logo.png" alt="Team Personnel Solutions"
       onerror="this.style.display='none'; document.getElementById('logoText').style.display='block'" />
     <div id="logoText" style="display:none; font-size:1.4rem; font-weight:800; color:var(--blue);">
       Team Personnel <span style="color:var(--accent)">Solutions</span>
@@ -635,7 +635,7 @@
           <div class="field">
             <label>Data di nascita <span class="req">*</span></label>
             <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_nascita"><span>gg/mm/aaaa</span><span>📅</span></div>
+              <div class="date-display placeholder" id="disp_nascita"><span>gg.mm.aaaa</span><span>📅</span></div>
               <input type="date" name="data_nascita" id="data_nascita" required onchange="updDate(this,'disp_nascita')" />
             </div>
           </div>
@@ -683,6 +683,18 @@
             <label>Email personale <span class="req">*</span></label>
             <input type="email" name="email" required placeholder="mario.rossi@email.com" />
           </div>
+
+          <div class="field full">
+            <label>Altri cellulari <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+            <div id="cellulariExtraContainer"></div>
+            <button type="button" class="btn-add" onclick="addCellulareExtra()">+ Aggiungi cellulare</button>
+          </div>
+
+          <div class="field full">
+            <label>Altre email <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+            <div id="emailExtraContainer"></div>
+            <button type="button" class="btn-add" onclick="addEmailExtra()">+ Aggiungi email</button>
+          </div>
         </div>
       </div>
 
@@ -709,7 +721,7 @@
           <div class="field cond-hidden" id="wrap_data_stato_civile">
             <label>Data matrimonio, separazione, vedovanza <span class="req">*</span></label>
             <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_data_stato_civile"><span>gg/mm/aaaa</span><span>📅</span></div>
+              <div class="date-display placeholder" id="disp_data_stato_civile"><span>gg.mm.aaaa</span><span>📅</span></div>
               <input type="date" name="data_stato_civile" onchange="updDate(this,'disp_data_stato_civile')" />
             </div>
           </div>
@@ -745,7 +757,7 @@
             <div class="field">
               <label>Data di nascita coniuge <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_coniuge_nascita"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_coniuge_nascita"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="coniuge_data_nascita" onchange="updDate(this,'disp_coniuge_nascita')" />
               </div>
             </div>
@@ -771,7 +783,7 @@
             <div class="field">
               <label>Data inizio attività del coniuge <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_coniuge_attivita"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_coniuge_attivita"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="coniuge_data_inizio_attivita" onchange="updDate(this,'disp_coniuge_attivita')" />
               </div>
             </div>
@@ -886,12 +898,14 @@
           </div>
         </div>
 
-        <div class="subsection-title">Lavoro in Svizzera</div>
-        <div class="field" style="margin-bottom:16px;">
-          <label>Ha già lavorato in Svizzera? <span class="req">*</span></label>
-          <div class="radio-si-no">
-            <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="Si" /> Sì</label>
-            <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="No" /> No</label>
+        <div id="wrap_lavoro_svizzera" class="cond-hidden">
+          <div class="subsection-title">Lavoro in Svizzera</div>
+          <div class="field" style="margin-bottom:16px;">
+            <label>Ha già lavorato in Svizzera? <span class="req">*</span></label>
+            <div class="radio-si-no">
+              <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="Si" /> Sì</label>
+              <label class="radio-opt"><input type="radio" name="lavorato_svizzera" value="No" /> No</label>
+            </div>
           </div>
         </div>
         <div id="wrap_permesso" class="cond-hidden" style="margin-bottom:16px;">
@@ -902,6 +916,7 @@
                 <option value="">— Seleziona —</option>
                 <option>Notifica</option>
                 <option>Frontaliere G</option>
+                <option>Permesso G con rientro settimanale</option>
                 <option>Soggiorno B</option>
                 <option>Breve durata L</option>
                 <option>Dimora C</option>
@@ -917,19 +932,40 @@
             </div>
           </div>
         </div>
+        <div id="wrap_residenza_settimanale" class="cond-hidden" style="margin-bottom:16px;">
+          <div class="subsection-title">Indirizzo di residenza settimanale</div>
+          <div class="grid-2">
+            <div class="field full">
+              <label>Indirizzo <span class="req">*</span></label>
+              <input type="text" name="res_sett_indirizzo" placeholder="Via/Strada, numero civico" />
+            </div>
+            <div class="field full">
+              <label>Indirizzo 2 <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+              <input type="text" name="res_sett_indirizzo2" placeholder="Complemento di indirizzo" />
+            </div>
+            <div class="field">
+              <label>CAP / NPA <span class="req">*</span></label>
+              <input type="text" name="res_sett_cap" inputmode="numeric" placeholder="Es. 6900" />
+            </div>
+            <div class="field">
+              <label>Luogo <span class="req">*</span></label>
+              <input type="text" name="res_sett_luogo" placeholder="Es. Lugano" />
+            </div>
+          </div>
+        </div>
         <div id="wrap_permesso_date" class="cond-hidden" style="margin-bottom:16px;">
           <div class="grid-2">
             <div class="field">
               <label>Data di emissione <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_permesso_emissione"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_permesso_emissione"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="permesso_emissione" onchange="updDate(this,'disp_permesso_emissione')" />
               </div>
             </div>
             <div class="field">
               <label>Data di scadenza <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_permesso_scadenza"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_permesso_scadenza"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="permesso_scadenza" onchange="updDate(this,'disp_permesso_scadenza')" />
               </div>
             </div>
@@ -984,6 +1020,14 @@
               <label class="radio-opt"><input type="radio" name="sta_lavorando" value="Si" /> Sì</label>
               <label class="radio-opt"><input type="radio" name="sta_lavorando" value="No" /> No</label>
             </div>
+          </div>
+          <div class="field cond-hidden" id="wrap_perc_lavoro">
+            <label>% di lavoro attuale <span class="req">*</span></label>
+            <input type="number" name="perc_lavoro" inputmode="numeric" min="1" max="100" placeholder="Es. 80" />
+          </div>
+          <div class="field cond-hidden" id="wrap_professione_attuale">
+            <label>Professione esercitata attualmente <span class="req">*</span></label>
+            <input type="text" name="professione_attuale" placeholder="Es. Operaio edile" />
           </div>
           <div class="field">
             <label>È iscritto alla disoccupazione? <span class="req">*</span></label>
@@ -1055,12 +1099,23 @@
           <div class="section-icon">❤️</div>
           <div><h2>Salute</h2><p>Stato di salute generale</p></div>
         </div>
-        <div class="field">
-          <label>Gode di buona salute? <span class="req">*</span></label>
+        <div class="field" style="margin-bottom:20px;">
+          <label>Ha limitazioni fisiche o condizioni di salute che le impediscono di svolgere le mansioni previste per questo ruolo? <span class="req">*</span></label>
           <div class="radio-si-no">
-            <label class="radio-opt"><input type="radio" name="buona_salute" value="Si" /> Sì</label>
-            <label class="radio-opt"><input type="radio" name="buona_salute" value="No" /> No</label>
+            <label class="radio-opt"><input type="radio" name="limitazioni_salute" value="Si" /> Sì</label>
+            <label class="radio-opt"><input type="radio" name="limitazioni_salute" value="No" /> No</label>
           </div>
+        </div>
+        <div class="field">
+          <label>Se è il caso, è in grado di lavorare su turni, sollevare carichi pesanti o lavorare in piedi per diverse ore? <span class="req">*</span></label>
+          <div class="radio-si-no">
+            <label class="radio-opt"><input type="radio" name="idoneita_mansioni" value="Si" /> Sì</label>
+            <label class="radio-opt"><input type="radio" name="idoneita_mansioni" value="No" /> No</label>
+            <label class="radio-opt"><input type="radio" name="idoneita_mansioni" value="Non previsto per il tipo di mansione" /> Non previsto per il tipo di mansione</label>
+          </div>
+        </div>
+        <div class="info-box" style="margin-top:20px;margin-bottom:0;">
+          L'azienda si riserva il diritto di chiedere un certificato di buona salute in ogni momento.
         </div>
       </div>
 
@@ -1330,7 +1385,7 @@
     document.getElementById('accessoBox').innerHTML = `
       <div style="background:white;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.10);width:100%;max-width:400px;overflow:hidden;">
         <div style="background:white;padding:22px 28px;display:flex;align-items:center;gap:14px;border-bottom:2px solid #e2e8f0;">
-          <img src="https://goccia-sa.github.io/OnboardingTPS/logo.png" alt="TPS" style="height:40px;" onerror="this.style.display='none'">
+          <img src="logo.png" alt="TPS" style="height:40px;" onerror="this.style.display='none'">
           <div style="color:#1a3a6b;">
             <div style="font-size:1rem;font-weight:700;">Team Personnel Solutions</div>
             <div style="font-size:0.78rem;color:#718096;margin-top:2px;">Accesso riservato al personale</div>
@@ -1571,9 +1626,12 @@
     try {
       // Genera token (usa email fittizia se non inserita). canale='whatsapp' → il flusso non invia email reale
       const token = await generaToken(nome, cognome, email, 'whatsapp');
+      // Base = dominio da cui è aperto il form (es. https://onboarding.tps-sa.ch),
+      // così il link segue il dominio personalizzato senza URL hardcoded.
+      const base  = window.location.origin;
       const link  = token
-        ? `https://goccia-sa.github.io/OnboardingTPS/?token=${token}`
-        : `https://goccia-sa.github.io/OnboardingTPS/`;
+        ? `${base}/?token=${token}`
+        : `${base}/`;
       const testo = encodeURIComponent(
         `Ciao ${nome}, Team Personnel Solutions ti invita a compilare il modulo di registrazione.\n\nClicca sul link (valido 7 giorni):\n${link}`
       );
@@ -1684,6 +1742,13 @@
   // Mostra Sì/No in modo leggibile (i valori salvati sono "Si"/"No")
   function siNo(v) { return v === 'Si' ? 'Sì' : (v || ''); }
 
+  // Compone l'indirizzo di residenza settimanale in una riga leggibile
+  function residenzaSettimanaleTesto(d) {
+    const via = [d.res_sett_indirizzo, d.res_sett_indirizzo2].filter(Boolean).join(', ');
+    const loc = [d.res_sett_cap, d.res_sett_luogo].filter(Boolean).join(' ');
+    return [via, loc].filter(Boolean).join(' — ');
+  }
+
   // ─── CAMPI CONDIZIONALI (mostra/nascondi + obbligo) ─────────────
   // L'ordine conta: i wrapper a cascata (es. permesso → date permesso,
   // conto_proprio → intestatario) vanno DOPO il loro trigger, così lo
@@ -1703,12 +1768,23 @@
       attivo: () => val('nazionalita') === 'Estero' },
     { step: 4, wrap: 'wrap_codice_fiscale', campi: ['codice_fiscale'],
       attivo: () => val('nazionalita_estera') === 'Italia' },
+    // Domanda "lavorato in Svizzera" e permessi: solo per nazionalità estera.
+    { step: 4, wrap: 'wrap_lavoro_svizzera', campi: ['lavorato_svizzera'],
+      attivo: () => val('nazionalita') === 'Estero' },
     { step: 4, wrap: 'wrap_permesso', campi: ['permesso_tipo','permesso_valido'],
       attivo: () => radioVal('lavorato_svizzera') === 'Si' },
+    { step: 4, wrap: 'wrap_residenza_settimanale', campi: ['res_sett_indirizzo','res_sett_cap','res_sett_luogo'],
+      svuotaAnche: ['res_sett_indirizzo2'],
+      attivo: () => radioVal('lavorato_svizzera') === 'Si' && val('permesso_tipo') === 'Permesso G con rientro settimanale' },
     { step: 4, wrap: 'wrap_permesso_date', campi: ['permesso_emissione','permesso_scadenza'],
       attivo: () => radioVal('lavorato_svizzera') === 'Si' && radioVal('permesso_valido') === 'Si' },
+    // AVS obbligatorio se cittadino svizzero oppure se ha già lavorato in Svizzera.
     { step: 4, wrap: 'wrap_avs', campi: ['avs'],
-      attivo: () => radioVal('lavorato_svizzera') === 'Si' },
+      attivo: () => val('nazionalita') === 'Svizzera' || radioVal('lavorato_svizzera') === 'Si' },
+    { step: 5, wrap: 'wrap_perc_lavoro', campi: ['perc_lavoro'],
+      attivo: () => radioVal('sta_lavorando') === 'Si' },
+    { step: 5, wrap: 'wrap_professione_attuale', campi: ['professione_attuale'],
+      attivo: () => radioVal('sta_lavorando') === 'Si' },
     { step: 5, wrap: 'wrap_cassa', campi: ['cassa_disoccupazione'],
       attivo: () => radioVal('iscritto_disoccupazione') === 'Si' },
     { step: 7, wrap: 'wrap_conto_proprio', campi: ['conto_proprio'],
@@ -1720,9 +1796,9 @@
   // Radio Sì/No sempre obbligatori, per sezione
   const RADIO_OBBLIGATORI = {
     2: ['nuovo_permesso'],
-    4: ['lavorato_svizzera'],
+    // lavorato_svizzera è obbligatorio solo per nazionalità estera → gestito in CONDIZIONALI
     5: ['sta_lavorando','iscritto_disoccupazione','cv_mandato','lavorato_agenzia','patenti_valide'],
-    6: ['buona_salute']
+    6: ['limitazioni_salute','idoneita_mansioni']
   };
 
   function svuotaCampo(name) {
@@ -1733,7 +1809,7 @@
         if (el.type === 'date') {
           const wrap = el.closest('.date-wrapper');
           const disp = wrap ? wrap.querySelector('.date-display') : null;
-          if (disp) { disp.innerHTML = '<span>gg/mm/aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
+          if (disp) { disp.innerHTML = '<span>gg.mm.aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
         }
       }
       el.style.border = ''; el.style.outline = '';
@@ -1747,7 +1823,10 @@
       if (!w) return;
       const attivo = c.attivo();
       w.classList.toggle('cond-hidden', !attivo);
-      if (!attivo) c.campi.forEach(svuotaCampo);
+      if (!attivo) {
+        c.campi.forEach(svuotaCampo);
+        (c.svuotaAnche || []).forEach(svuotaCampo);   // facoltativi: azzerati ma non obbligatori
+      }
     });
     // Avviso CV nella sezione Lavorativa
     const infoCv = document.getElementById('info_cv');
@@ -1857,7 +1936,7 @@
   function formatDateIT(val) {
     if (!val) return '';
     const [y,m,d] = val.split('-');
-    return `${d}/${m}/${y}`;
+    return `${d}.${m}.${y}`;
   }
   function updDate(input, dispId) {
     const disp = document.getElementById(dispId);
@@ -1865,7 +1944,7 @@
       disp.innerHTML = `<span>${formatDateIT(input.value)}</span><span>📅</span>`;
       disp.classList.remove('placeholder');
     } else {
-      disp.innerHTML = `<span>gg/mm/aaaa</span><span>📅</span>`;
+      disp.innerHTML = `<span>gg.mm.aaaa</span><span>📅</span>`;
       disp.classList.add('placeholder');
     }
   }
@@ -2019,6 +2098,27 @@
         <div class="field"><label>Telefono</label><input type="tel" name="emg_telefono[]" placeholder="+41 79 123 45 67" /></div>
         <div class="field"><label>Email</label><input type="email" name="emg_email[]" placeholder="opzionale" /></div>
       </div>`;
+    container.appendChild(div);
+  }
+
+  // Cellulari ed email aggiuntivi (anagrafica) — campi ripetibili facoltativi
+  function addCellulareExtra() {
+    const container = document.getElementById('cellulariExtraContainer');
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+    div.innerHTML = `
+      <input type="tel" name="cellulare_extra[]" placeholder="+41 79 123 45 67" style="flex:1;" />
+      <button type="button" class="remove-item" style="position:static;" onclick="this.parentElement.remove()">✕</button>`;
+    container.appendChild(div);
+  }
+
+  function addEmailExtra() {
+    const container = document.getElementById('emailExtraContainer');
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+    div.innerHTML = `
+      <input type="email" name="email_extra[]" placeholder="altra.email@email.com" style="flex:1;" />
+      <button type="button" class="remove-item" style="position:static;" onclick="this.parentElement.remove()">✕</button>`;
     container.appendChild(div);
   }
 
@@ -2239,13 +2339,17 @@
     document.querySelectorAll('#onboardingForm input[type="date"]').forEach(el => {
       const wrap = el.closest('.date-wrapper');
       const disp = wrap ? wrap.querySelector('.date-display') : null;
-      if (disp) { disp.innerHTML = '<span>gg/mm/aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
+      if (disp) { disp.innerHTML = '<span>gg.mm.aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
     });
 
     // 3. Contatti di emergenza: rimuove le righe aggiunte, resta la prima
     document.querySelectorAll('#emergenzaContainer .repeater-item').forEach((item, i) => {
       if (i > 0) item.remove();
     });
+
+    // 3b. Cellulari ed email aggiuntivi: rimuove tutte le righe generate
+    document.getElementById('cellulariExtraContainer').innerHTML = '';
+    document.getElementById('emailExtraContainer').innerHTML = '';
 
     // 4. Firma
     initCanvas();
@@ -2329,7 +2433,7 @@
   async function caricaLogo() {
     if (_logoBase64) return _logoBase64;
     try {
-      const res = await fetch('https://goccia-sa.github.io/OnboardingTPS/logo.png');
+      const res = await fetch('logo.png');
       const blob = await res.blob();
       return new Promise(resolve => {
         const reader = new FileReader();
@@ -2425,7 +2529,9 @@
     row('Nazione', data.nazione);
     row('Telefono', data.telefono);
     row('Cellulare', data.cellulare);
+    if (data.cellulari_extra) row('Altri cellulari', data.cellulari_extra);
     row('Email', data.email);
+    if (data.email_extra) row('Altre email', data.email_extra);
     y += 4;
 
     sectionTitle('Famiglia');
@@ -2461,6 +2567,7 @@
     row('Codice fiscale', data.codice_fiscale);
     row('Già lavorato in Svizzera', siNo(data.lavorato_svizzera));
     row('Tipo permesso', data.permesso_tipo);
+    if (data.res_sett_indirizzo) row('Residenza settimanale', residenzaSettimanaleTesto(data));
     row('Permesso ancora valido', siNo(data.permesso_valido));
     row('Emissione permesso', data.permesso_emissione);
     row('Scadenza permesso', data.permesso_scadenza);
@@ -2470,6 +2577,8 @@
 
     sectionTitle('Situazione Lavorativa');
     row('Attualmente lavora', siNo(data.sta_lavorando));
+    if (data.perc_lavoro) row('% di lavoro attuale', `${data.perc_lavoro}%`);
+    if (data.professione_attuale) row('Professione attuale', data.professione_attuale);
     row('Iscritto disoccupazione', siNo(data.iscritto_disoccupazione));
     row('Cassa disoccupazione', data.cassa_disoccupazione);
     row('Mestiere imparato', data.mestiere);
@@ -2481,7 +2590,8 @@
     y += 4;
 
     sectionTitle('Salute');
-    row('Gode di buona salute', siNo(data.buona_salute));
+    row('Limitazioni / condizioni di salute', siNo(data.limitazioni_salute));
+    row('Idoneità a turni/carichi/in piedi', siNo(data.idoneita_mansioni));
     y += 4;
 
     sectionTitle('Salario');
@@ -2565,7 +2675,7 @@
   // ─── DOWNLOAD PDF (chiamato dal banner/pulsante) ─────────────────
   async function generatePDF(data) {
     const doc = await buildPDFDoc(data);
-    const filename = `${data.cognome}_${data.nome}_Registrazione_${data.data_invio.replace(/\//g,'-')}.pdf`;
+    const filename = `${data.cognome}_${data.nome}_Registrazione_${data.data_invio}.pdf`;
 
     // Metodo 1: blob + link (Chrome, Firefox, Edge, Android)
     try {
@@ -2645,7 +2755,9 @@
         ${r('Nazione', data.nazione)}
         ${r('Telefono', data.telefono)}
         ${r('Cellulare', data.cellulare)}
+        ${data.cellulari_extra ? r('Altri cellulari', data.cellulari_extra) : ''}
         ${r('Email', data.email)}
+        ${data.email_extra ? r('Altre email', data.email_extra) : ''}
       </div>
 
       <div class="modal-section">
@@ -2681,6 +2793,7 @@
         ${r('Codice fiscale', data.codice_fiscale)}
         ${r('Già lavorato in Svizzera', siNo(data.lavorato_svizzera))}
         ${r('Tipo permesso', data.permesso_tipo)}
+        ${data.res_sett_indirizzo ? r('Residenza settimanale', residenzaSettimanaleTesto(data)) : ''}
         ${r('Permesso ancora valido', siNo(data.permesso_valido))}
         ${r('Emissione permesso', data.permesso_emissione)}
         ${r('Scadenza permesso', data.permesso_scadenza)}
@@ -2691,6 +2804,8 @@
       <div class="modal-section">
         <h4>Situazione Lavorativa</h4>
         ${r('Attualmente lavora', siNo(data.sta_lavorando))}
+        ${data.perc_lavoro ? r('% di lavoro attuale', `${data.perc_lavoro}%`) : ''}
+        ${data.professione_attuale ? r('Professione attuale', data.professione_attuale) : ''}
         ${r('Iscritto disoccupazione', siNo(data.iscritto_disoccupazione))}
         ${r('Cassa disoccupazione', data.cassa_disoccupazione)}
         ${r('Mestiere imparato', data.mestiere)}
@@ -2703,7 +2818,8 @@
 
       <div class="modal-section">
         <h4>Salute</h4>
-        ${r('Gode di buona salute', siNo(data.buona_salute))}
+        ${r('Limitazioni / condizioni di salute', siNo(data.limitazioni_salute))}
+        ${r('Idoneità a turni/carichi/in piedi', siNo(data.idoneita_mansioni))}
       </div>
 
       <div class="modal-section">
@@ -2861,6 +2977,22 @@
     if (d.cellulare && d.cellulare.replace(/\D/g,'').length < 8) {
       return '⚠️ Il numero di cellulare non sembra valido (troppo corto).';
     }
+    // Cellulari aggiuntivi: stesso controllo (stringa "a, b, c")
+    if (d.cellulari_extra) {
+      for (const c of d.cellulari_extra.split(',')) {
+        if (c.trim() && c.replace(/\D/g,'').length < 8) {
+          return '⚠️ Uno dei cellulari aggiuntivi non sembra valido (troppo corto).';
+        }
+      }
+    }
+    // Email aggiuntive: stesso formato base (stringa "a, b, c")
+    if (d.email_extra) {
+      for (const em of d.email_extra.split(',')) {
+        if (em.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.trim())) {
+          return '⚠️ Una delle email aggiuntive non è valida.';
+        }
+      }
+    }
     return null;
   }
 
@@ -2910,6 +3042,14 @@
       .map((n, i) => ({ nome: n, relazione: emgRel[i] || '', telefono: emgTel[i] || '', email: emgEm[i] || '' }))
       .filter(c => c.nome || c.telefono);
 
+    // Cellulari ed email aggiuntivi (anagrafica) → stringa unita "a, b, c" (vuoti esclusi)
+    const cellulariExtra = [...form.querySelectorAll('[name="cellulare_extra[]"]')]
+      .map(el => el.value.trim().slice(0, 200)).filter(v => v);
+    const emailExtra = [...form.querySelectorAll('[name="email_extra[]"]')]
+      .map(el => el.value.trim().slice(0, 200)).filter(v => v);
+    data.cellulari_extra = cellulariExtra.join(', ');
+    data.email_extra = emailExtra.join(', ');
+
     // Patenti selezionate → stringa "B, C, CE"
     data.patenti = [...form.querySelectorAll('input[name="patenti[]"]:checked')].map(c => c.value).join(', ');
 
@@ -2930,12 +3070,12 @@
       if (data[f]) data[f] = formatDateIT(data[f]);
     });
 
-    // Formato data con trattini — le slash "/" creano sottocartelle in SharePoint!
+    // Formato data dd.mm.aaaa — evitare le slash "/" che creano sottocartelle in SharePoint!
     const oggi = new Date();
     const gg   = String(oggi.getDate()).padStart(2,'0');
     const mm   = String(oggi.getMonth()+1).padStart(2,'0');
     const aaaa = oggi.getFullYear();
-    data.data_invio      = `${gg}-${mm}-${aaaa}`;
+    data.data_invio      = `${gg}.${mm}.${aaaa}`;
     data.iban            = (data.iban||'').toUpperCase();
     data.codice_fiscale  = (data.codice_fiscale||'').toUpperCase();
     data.firma_base64    = canvas.toDataURL('image/png').split(',')[1];
