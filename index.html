@@ -635,7 +635,7 @@
           <div class="field">
             <label>Data di nascita <span class="req">*</span></label>
             <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_nascita"><span>gg/mm/aaaa</span><span>📅</span></div>
+              <div class="date-display placeholder" id="disp_nascita"><span>gg.mm.aaaa</span><span>📅</span></div>
               <input type="date" name="data_nascita" id="data_nascita" required onchange="updDate(this,'disp_nascita')" />
             </div>
           </div>
@@ -709,7 +709,7 @@
           <div class="field cond-hidden" id="wrap_data_stato_civile">
             <label>Data matrimonio, separazione, vedovanza <span class="req">*</span></label>
             <div class="date-wrapper">
-              <div class="date-display placeholder" id="disp_data_stato_civile"><span>gg/mm/aaaa</span><span>📅</span></div>
+              <div class="date-display placeholder" id="disp_data_stato_civile"><span>gg.mm.aaaa</span><span>📅</span></div>
               <input type="date" name="data_stato_civile" onchange="updDate(this,'disp_data_stato_civile')" />
             </div>
           </div>
@@ -745,7 +745,7 @@
             <div class="field">
               <label>Data di nascita coniuge <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_coniuge_nascita"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_coniuge_nascita"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="coniuge_data_nascita" onchange="updDate(this,'disp_coniuge_nascita')" />
               </div>
             </div>
@@ -771,7 +771,7 @@
             <div class="field">
               <label>Data inizio attività del coniuge <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_coniuge_attivita"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_coniuge_attivita"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="coniuge_data_inizio_attivita" onchange="updDate(this,'disp_coniuge_attivita')" />
               </div>
             </div>
@@ -922,14 +922,14 @@
             <div class="field">
               <label>Data di emissione <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_permesso_emissione"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_permesso_emissione"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="permesso_emissione" onchange="updDate(this,'disp_permesso_emissione')" />
               </div>
             </div>
             <div class="field">
               <label>Data di scadenza <span class="req">*</span></label>
               <div class="date-wrapper">
-                <div class="date-display placeholder" id="disp_permesso_scadenza"><span>gg/mm/aaaa</span><span>📅</span></div>
+                <div class="date-display placeholder" id="disp_permesso_scadenza"><span>gg.mm.aaaa</span><span>📅</span></div>
                 <input type="date" name="permesso_scadenza" onchange="updDate(this,'disp_permesso_scadenza')" />
               </div>
             </div>
@@ -1733,7 +1733,7 @@
         if (el.type === 'date') {
           const wrap = el.closest('.date-wrapper');
           const disp = wrap ? wrap.querySelector('.date-display') : null;
-          if (disp) { disp.innerHTML = '<span>gg/mm/aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
+          if (disp) { disp.innerHTML = '<span>gg.mm.aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
         }
       }
       el.style.border = ''; el.style.outline = '';
@@ -1857,7 +1857,7 @@
   function formatDateIT(val) {
     if (!val) return '';
     const [y,m,d] = val.split('-');
-    return `${d}/${m}/${y}`;
+    return `${d}.${m}.${y}`;
   }
   function updDate(input, dispId) {
     const disp = document.getElementById(dispId);
@@ -1865,7 +1865,7 @@
       disp.innerHTML = `<span>${formatDateIT(input.value)}</span><span>📅</span>`;
       disp.classList.remove('placeholder');
     } else {
-      disp.innerHTML = `<span>gg/mm/aaaa</span><span>📅</span>`;
+      disp.innerHTML = `<span>gg.mm.aaaa</span><span>📅</span>`;
       disp.classList.add('placeholder');
     }
   }
@@ -2239,7 +2239,7 @@
     document.querySelectorAll('#onboardingForm input[type="date"]').forEach(el => {
       const wrap = el.closest('.date-wrapper');
       const disp = wrap ? wrap.querySelector('.date-display') : null;
-      if (disp) { disp.innerHTML = '<span>gg/mm/aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
+      if (disp) { disp.innerHTML = '<span>gg.mm.aaaa</span><span>📅</span>'; disp.classList.add('placeholder'); }
     });
 
     // 3. Contatti di emergenza: rimuove le righe aggiunte, resta la prima
@@ -2565,7 +2565,7 @@
   // ─── DOWNLOAD PDF (chiamato dal banner/pulsante) ─────────────────
   async function generatePDF(data) {
     const doc = await buildPDFDoc(data);
-    const filename = `${data.cognome}_${data.nome}_Registrazione_${data.data_invio.replace(/\//g,'-')}.pdf`;
+    const filename = `${data.cognome}_${data.nome}_Registrazione_${data.data_invio}.pdf`;
 
     // Metodo 1: blob + link (Chrome, Firefox, Edge, Android)
     try {
@@ -2930,12 +2930,12 @@
       if (data[f]) data[f] = formatDateIT(data[f]);
     });
 
-    // Formato data con trattini — le slash "/" creano sottocartelle in SharePoint!
+    // Formato data dd.mm.aaaa — evitare le slash "/" che creano sottocartelle in SharePoint!
     const oggi = new Date();
     const gg   = String(oggi.getDate()).padStart(2,'0');
     const mm   = String(oggi.getMonth()+1).padStart(2,'0');
     const aaaa = oggi.getFullYear();
-    data.data_invio      = `${gg}-${mm}-${aaaa}`;
+    data.data_invio      = `${gg}.${mm}.${aaaa}`;
     data.iban            = (data.iban||'').toUpperCase();
     data.codice_fiscale  = (data.codice_fiscale||'').toUpperCase();
     data.firma_base64    = canvas.toDataURL('image/png').split(',')[1];
