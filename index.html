@@ -503,7 +503,7 @@
 <div id="staffMenu" style="display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px; background:#f4f6f9;">
   <div style="background:white;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.10);width:100%;max-width:480px;overflow:hidden;">
     <div style="background:white;padding:24px 28px;display:flex;align-items:center;gap:14px;border-bottom:2px solid #e2e8f0;">
-      <img src="https://goccia-sa.github.io/OnboardingTPS/logo.png" alt="TPS" style="height:44px;" onerror="this.style.display='none'">
+      <img src="logo.png" alt="TPS" style="height:44px;" onerror="this.style.display='none'">
       <div style="color:#1a3a6b;">
         <div style="font-size:1rem;font-weight:700;">Team Personnel Solutions</div>
         <div style="font-size:0.78rem;color:#718096;margin-top:2px;">Portale interno onboarding</div>
@@ -577,7 +577,7 @@
 
   <!-- HEADER -->
   <div class="header-card">
-    <img src="https://goccia-sa.github.io/OnboardingTPS/logo.png" alt="Team Personnel Solutions"
+    <img src="logo.png" alt="Team Personnel Solutions"
       onerror="this.style.display='none'; document.getElementById('logoText').style.display='block'" />
     <div id="logoText" style="display:none; font-size:1.4rem; font-weight:800; color:var(--blue);">
       Team Personnel <span style="color:var(--accent)">Solutions</span>
@@ -1385,7 +1385,7 @@
     document.getElementById('accessoBox').innerHTML = `
       <div style="background:white;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.10);width:100%;max-width:400px;overflow:hidden;">
         <div style="background:white;padding:22px 28px;display:flex;align-items:center;gap:14px;border-bottom:2px solid #e2e8f0;">
-          <img src="https://goccia-sa.github.io/OnboardingTPS/logo.png" alt="TPS" style="height:40px;" onerror="this.style.display='none'">
+          <img src="logo.png" alt="TPS" style="height:40px;" onerror="this.style.display='none'">
           <div style="color:#1a3a6b;">
             <div style="font-size:1rem;font-weight:700;">Team Personnel Solutions</div>
             <div style="font-size:0.78rem;color:#718096;margin-top:2px;">Accesso riservato al personale</div>
@@ -1626,9 +1626,12 @@
     try {
       // Genera token (usa email fittizia se non inserita). canale='whatsapp' → il flusso non invia email reale
       const token = await generaToken(nome, cognome, email, 'whatsapp');
+      // Base = dominio da cui è aperto il form (es. https://onboarding.tps-sa.ch),
+      // così il link segue il dominio personalizzato senza URL hardcoded.
+      const base  = window.location.origin;
       const link  = token
-        ? `https://goccia-sa.github.io/OnboardingTPS/?token=${token}`
-        : `https://goccia-sa.github.io/OnboardingTPS/`;
+        ? `${base}/?token=${token}`
+        : `${base}/`;
       const testo = encodeURIComponent(
         `Ciao ${nome}, Team Personnel Solutions ti invita a compilare il modulo di registrazione.\n\nClicca sul link (valido 7 giorni):\n${link}`
       );
@@ -2430,7 +2433,7 @@
   async function caricaLogo() {
     if (_logoBase64) return _logoBase64;
     try {
-      const res = await fetch('https://goccia-sa.github.io/OnboardingTPS/logo.png');
+      const res = await fetch('logo.png');
       const blob = await res.blob();
       return new Promise(resolve => {
         const reader = new FileReader();
