@@ -1055,12 +1055,23 @@
           <div class="section-icon">❤️</div>
           <div><h2>Salute</h2><p>Stato di salute generale</p></div>
         </div>
-        <div class="field">
-          <label>Gode di buona salute? <span class="req">*</span></label>
+        <div class="field" style="margin-bottom:20px;">
+          <label>Ha limitazioni fisiche o condizioni di salute che le impediscono di svolgere le mansioni previste per questo ruolo? <span class="req">*</span></label>
           <div class="radio-si-no">
-            <label class="radio-opt"><input type="radio" name="buona_salute" value="Si" /> Sì</label>
-            <label class="radio-opt"><input type="radio" name="buona_salute" value="No" /> No</label>
+            <label class="radio-opt"><input type="radio" name="limitazioni_salute" value="Si" /> Sì</label>
+            <label class="radio-opt"><input type="radio" name="limitazioni_salute" value="No" /> No</label>
           </div>
+        </div>
+        <div class="field">
+          <label>Se è il caso, è in grado di lavorare su turni, sollevare carichi pesanti o lavorare in piedi per diverse ore? <span class="req">*</span></label>
+          <div class="radio-si-no">
+            <label class="radio-opt"><input type="radio" name="idoneita_mansioni" value="Si" /> Sì</label>
+            <label class="radio-opt"><input type="radio" name="idoneita_mansioni" value="No" /> No</label>
+            <label class="radio-opt"><input type="radio" name="idoneita_mansioni" value="Non previsto per il tipo di mansione" /> Non previsto per il tipo di mansione</label>
+          </div>
+        </div>
+        <div class="info-box" style="margin-top:20px;margin-bottom:0;">
+          L'azienda si riserva il diritto di chiedere un certificato di buona salute in ogni momento.
         </div>
       </div>
 
@@ -1722,7 +1733,7 @@
     2: ['nuovo_permesso'],
     4: ['lavorato_svizzera'],
     5: ['sta_lavorando','iscritto_disoccupazione','cv_mandato','lavorato_agenzia','patenti_valide'],
-    6: ['buona_salute']
+    6: ['limitazioni_salute','idoneita_mansioni']
   };
 
   function svuotaCampo(name) {
@@ -2481,7 +2492,8 @@
     y += 4;
 
     sectionTitle('Salute');
-    row('Gode di buona salute', siNo(data.buona_salute));
+    row('Limitazioni / condizioni di salute', siNo(data.limitazioni_salute));
+    row('Idoneità a turni/carichi/in piedi', siNo(data.idoneita_mansioni));
     y += 4;
 
     sectionTitle('Salario');
@@ -2703,7 +2715,8 @@
 
       <div class="modal-section">
         <h4>Salute</h4>
-        ${r('Gode di buona salute', siNo(data.buona_salute))}
+        ${r('Limitazioni / condizioni di salute', siNo(data.limitazioni_salute))}
+        ${r('Idoneità a turni/carichi/in piedi', siNo(data.idoneita_mansioni))}
       </div>
 
       <div class="modal-section">
