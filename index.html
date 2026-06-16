@@ -1021,6 +1021,14 @@
               <label class="radio-opt"><input type="radio" name="sta_lavorando" value="No" /> No</label>
             </div>
           </div>
+          <div class="field cond-hidden" id="wrap_perc_lavoro">
+            <label>% di lavoro attuale <span class="req">*</span></label>
+            <input type="number" name="perc_lavoro" inputmode="numeric" min="1" max="100" placeholder="Es. 80" />
+          </div>
+          <div class="field cond-hidden" id="wrap_professione_attuale">
+            <label>Professione esercitata attualmente <span class="req">*</span></label>
+            <input type="text" name="professione_attuale" placeholder="Es. Operaio edile" />
+          </div>
           <div class="field">
             <label>È iscritto alla disoccupazione? <span class="req">*</span></label>
             <div class="radio-si-no">
@@ -1770,6 +1778,10 @@
     // AVS obbligatorio se cittadino svizzero oppure se ha già lavorato in Svizzera.
     { step: 4, wrap: 'wrap_avs', campi: ['avs'],
       attivo: () => val('nazionalita') === 'Svizzera' || radioVal('lavorato_svizzera') === 'Si' },
+    { step: 5, wrap: 'wrap_perc_lavoro', campi: ['perc_lavoro'],
+      attivo: () => radioVal('sta_lavorando') === 'Si' },
+    { step: 5, wrap: 'wrap_professione_attuale', campi: ['professione_attuale'],
+      attivo: () => radioVal('sta_lavorando') === 'Si' },
     { step: 5, wrap: 'wrap_cassa', campi: ['cassa_disoccupazione'],
       attivo: () => radioVal('iscritto_disoccupazione') === 'Si' },
     { step: 7, wrap: 'wrap_conto_proprio', campi: ['conto_proprio'],
@@ -2562,6 +2574,8 @@
 
     sectionTitle('Situazione Lavorativa');
     row('Attualmente lavora', siNo(data.sta_lavorando));
+    if (data.perc_lavoro) row('% di lavoro attuale', `${data.perc_lavoro}%`);
+    if (data.professione_attuale) row('Professione attuale', data.professione_attuale);
     row('Iscritto disoccupazione', siNo(data.iscritto_disoccupazione));
     row('Cassa disoccupazione', data.cassa_disoccupazione);
     row('Mestiere imparato', data.mestiere);
@@ -2787,6 +2801,8 @@
       <div class="modal-section">
         <h4>Situazione Lavorativa</h4>
         ${r('Attualmente lavora', siNo(data.sta_lavorando))}
+        ${data.perc_lavoro ? r('% di lavoro attuale', `${data.perc_lavoro}%`) : ''}
+        ${data.professione_attuale ? r('Professione attuale', data.professione_attuale) : ''}
         ${r('Iscritto disoccupazione', siNo(data.iscritto_disoccupazione))}
         ${r('Cassa disoccupazione', data.cassa_disoccupazione)}
         ${r('Mestiere imparato', data.mestiere)}
