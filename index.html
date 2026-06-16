@@ -683,6 +683,18 @@
             <label>Email personale <span class="req">*</span></label>
             <input type="email" name="email" required placeholder="mario.rossi@email.com" />
           </div>
+
+          <div class="field full">
+            <label>Altri cellulari <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+            <div id="cellulariExtraContainer"></div>
+            <button type="button" class="btn-add" onclick="addCellulareExtra()">+ Aggiungi cellulare</button>
+          </div>
+
+          <div class="field full">
+            <label>Altre email <small style="color:var(--text-muted);font-weight:400">(facoltativo)</small></label>
+            <div id="emailExtraContainer"></div>
+            <button type="button" class="btn-add" onclick="addEmailExtra()">+ Aggiungi email</button>
+          </div>
         </div>
       </div>
 
@@ -2033,6 +2045,27 @@
     container.appendChild(div);
   }
 
+  // Cellulari ed email aggiuntivi (anagrafica) — campi ripetibili facoltativi
+  function addCellulareExtra() {
+    const container = document.getElementById('cellulariExtraContainer');
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+    div.innerHTML = `
+      <input type="tel" name="cellulare_extra[]" placeholder="+41 79 123 45 67" style="flex:1;" />
+      <button type="button" class="remove-item" style="position:static;" onclick="this.parentElement.remove()">✕</button>`;
+    container.appendChild(div);
+  }
+
+  function addEmailExtra() {
+    const container = document.getElementById('emailExtraContainer');
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+    div.innerHTML = `
+      <input type="email" name="email_extra[]" placeholder="altra.email@email.com" style="flex:1;" />
+      <button type="button" class="remove-item" style="position:static;" onclick="this.parentElement.remove()">✕</button>`;
+    container.appendChild(div);
+  }
+
   // FIRMA
   const canvas = document.getElementById('signatureCanvas');
   const ctx    = canvas.getContext('2d');
@@ -2258,6 +2291,10 @@
       if (i > 0) item.remove();
     });
 
+    // 3b. Cellulari ed email aggiuntivi: rimuove tutte le righe generate
+    document.getElementById('cellulariExtraContainer').innerHTML = '';
+    document.getElementById('emailExtraContainer').innerHTML = '';
+
     // 4. Firma
     initCanvas();
     hasSigned = false;
@@ -2436,7 +2473,9 @@
     row('Nazione', data.nazione);
     row('Telefono', data.telefono);
     row('Cellulare', data.cellulare);
+    if (data.cellulari_extra) row('Altri cellulari', data.cellulari_extra);
     row('Email', data.email);
+    if (data.email_extra) row('Altre email', data.email_extra);
     y += 4;
 
     sectionTitle('Famiglia');
@@ -2657,7 +2696,9 @@
         ${r('Nazione', data.nazione)}
         ${r('Telefono', data.telefono)}
         ${r('Cellulare', data.cellulare)}
+        ${data.cellulari_extra ? r('Altri cellulari', data.cellulari_extra) : ''}
         ${r('Email', data.email)}
+        ${data.email_extra ? r('Altre email', data.email_extra) : ''}
       </div>
 
       <div class="modal-section">
@@ -2874,6 +2915,22 @@
     if (d.cellulare && d.cellulare.replace(/\D/g,'').length < 8) {
       return '⚠️ Il numero di cellulare non sembra valido (troppo corto).';
     }
+    // Cellulari aggiuntivi: stesso controllo (stringa "a, b, c")
+    if (d.cellulari_extra) {
+      for (const c of d.cellulari_extra.split(',')) {
+        if (c.trim() && c.replace(/\D/g,'').length < 8) {
+          return '⚠️ Uno dei cellulari aggiuntivi non sembra valido (troppo corto).';
+        }
+      }
+    }
+    // Email aggiuntive: stesso formato base (stringa "a, b, c")
+    if (d.email_extra) {
+      for (const em of d.email_extra.split(',')) {
+        if (em.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.trim())) {
+          return '⚠️ Una delle email aggiuntive non è valida.';
+        }
+      }
+    }
     return null;
   }
 
@@ -2922,6 +2979,14 @@
     data.emergenze = emgNomi
       .map((n, i) => ({ nome: n, relazione: emgRel[i] || '', telefono: emgTel[i] || '', email: emgEm[i] || '' }))
       .filter(c => c.nome || c.telefono);
+
+    // Cellulari ed email aggiuntivi (anagrafica) → stringa unita "a, b, c" (vuoti esclusi)
+    const cellulariExtra = [...form.querySelectorAll('[name="cellulare_extra[]"]')]
+      .map(el => el.value.trim().slice(0, 200)).filter(v => v);
+    const emailExtra = [...form.querySelectorAll('[name="email_extra[]"]')]
+      .map(el => el.value.trim().slice(0, 200)).filter(v => v);
+    data.cellulari_extra = cellulariExtra.join(', ');
+    data.email_extra = emailExtra.join(', ');
 
     // Patenti selezionate → stringa "B, C, CE"
     data.patenti = [...form.querySelectorAll('input[name="patenti[]"]:checked')].map(c => c.value).join(', ');
